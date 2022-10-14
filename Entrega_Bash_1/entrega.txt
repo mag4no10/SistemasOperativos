@@ -1,0 +1,1 @@
+ps -U atenea -u atenea | grep gnome | wc -l
