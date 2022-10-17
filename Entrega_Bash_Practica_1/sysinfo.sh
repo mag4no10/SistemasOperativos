@@ -35,7 +35,7 @@ system_info() {
 show_uptime() {
     # Función de stub temporal
     echo "${TEXT_BOLD}Función show_uptime:${TEXT_RESET}"
-    echo -n -e "\t"; uptime -p
+    echo -n -e "\t"; uptime
     echo ""
 }
 
@@ -43,8 +43,9 @@ show_uptime() {
 drive_space() {
     # Función de stub temporal
     echo "${TEXT_BOLD}Función drive_space:${TEXT_RESET}"
-    echo -n -e "\tEspacio disponible en disco: "
-    sudo df -h / | tail +2 | awk '{print $4}'
+    #echo -n -e "\tEspacio disponible en disco: "
+    #sudo df -h / | tail +2 | awk '{print $4}'
+    sudo df --output=fstype,used,target -h | grep -v snap | sort
     echo ""
 }
 
@@ -52,8 +53,13 @@ drive_space() {
 home_space() {
     # Función de stub temporal
     echo "${TEXT_BOLD}Función home_space${TEXT_RESET}"
-    echo -n -e "\tEspacio ocupado por /home: "
-    sudo df -h ~ | tail +2 |awk '{print $3}'
+    #echo -n -e "\tEspacio ocupado por /home: "
+    #sudo df -h ~ | tail +2 |awk '{print $3}'
+    if [ "$USER" = root ]; then
+        du -sh /home/*/* | sort -hr
+    else
+        df -h /home/$USER | awk -v OFS="\t" '{print $3,$5,$6}'
+    fi
     echo ""
 }
 
