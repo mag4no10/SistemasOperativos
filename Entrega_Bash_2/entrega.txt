@@ -1,0 +1,1 @@
+ls /{tmp,home/atenea} | tail +2 | wc -l

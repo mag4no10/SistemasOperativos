@@ -1,0 +1,1 @@
+Un comando que me de la suma de los ficheros y directorios de "/tmp" y de HOME del usuario
