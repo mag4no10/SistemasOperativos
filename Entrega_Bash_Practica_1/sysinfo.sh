@@ -49,14 +49,15 @@ drive_space() {
     echo ""
 }
 
-
 home_space() {
     # Función de stub temporal
     echo "${TEXT_BOLD}Función home_space${TEXT_RESET}"
     #echo -n -e "\tEspacio ocupado por /home: "
     #sudo df -h ~ | tail +2 |awk '{print $3}'
     if [ "$USER" = root ]; then
-        du -sh /home/*/* | sort -hr
+    echo -e "Press enter..."
+        read
+        du -ch /home/ | sort -hr
     else
         df -h /home/$USER | awk -v OFS="\t" '{print $3,$5,$6}'
     fi
