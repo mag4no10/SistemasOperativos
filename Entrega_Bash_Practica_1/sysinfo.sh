@@ -81,3 +81,5 @@ system_info
 show_uptime
 drive_space
 home_space
+
+exit 0
