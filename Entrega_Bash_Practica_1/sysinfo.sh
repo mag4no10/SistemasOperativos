@@ -35,8 +35,13 @@ system_info() {
 show_uptime() {
     # Función de stub temporal
     echo "${TEXT_BOLD}Función show_uptime:${TEXT_RESET}"
-    echo -n -e "\t"; uptime
+    #echo -n -e "\t"; uptime    actividad 2 comentada
+    #echo ""
+    if [ "$USER" = "$LOGNAME" ]; then
+        ps -U root,$USER -u root,$USER | wc -l
+    fi
     echo ""
+
 }
 
 
@@ -51,13 +56,9 @@ drive_space() {
 
 home_space() {
     # Función de stub temporal
-    echo "${TEXT_BOLD}Función home_space${TEXT_RESET}"
-    #echo -n -e "\tEspacio ocupado por /home: "
-    #sudo df -h ~ | tail +2 |awk '{print $3}'
+    echo "${TEXT_BOLD}Función home_space:${TEXT_RESET}"
     if [ "$USER" = root ]; then
-    echo -e "Press enter..."
-        read
-        du -ch /home/ | sort -hr
+        du -sh /home/* | sort -hr
     else
         df -h /home/$USER | awk -v OFS="\t" '{print $3,$5,$6}'
     fi

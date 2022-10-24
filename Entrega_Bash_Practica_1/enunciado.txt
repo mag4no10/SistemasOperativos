@@ -1,0 +1,1 @@
+Modificar la funcion "uptime" para que si USER es igual a LOGNAME, sumar los pocesos de USER y los de root
