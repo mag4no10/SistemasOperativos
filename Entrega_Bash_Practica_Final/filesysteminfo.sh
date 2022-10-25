@@ -12,8 +12,10 @@ filesysteminfo() {
     fi
     while read -r line; do
             count=$(sudo df --all --output=target,fstype,size -h | grep $line | wc -l)
-            space=$(sudo df --all --output=target,fstype,size -h | grep $line | sort -k2 -r | head -n 1)
-            echo -e "$count \t $space"
+            space=$(sudo df --all --output=target,fstype,size -h | grep $line | sort -k3 -r | head -n 1)
+            total_space=$(sudo df --all --output=target,fstype,size | grep $line | 
+                          awk 'BEGIN {printf "%s",$3} {sum+=$3} END {printf "%d",sum}')
+            echo -e "$space\t$count\t$total_space"
     done <<< $output
 }
 
