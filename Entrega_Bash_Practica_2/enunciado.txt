@@ -1,0 +1,1 @@
+dado ps -A -o size --no-headers
