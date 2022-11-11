@@ -8,7 +8,7 @@
 # Funciones:
 function usage() {
     echo    "Usage: filesysteminfo.sh [-inv] para invertir"
-    echo    "       filesysteminfo.sh [--header] para añadir una cabecera"
+    echo    "       filesysteminfo.sh [--no-header] para añadir una cabecera"
     echo -e "       filesysteminfo.sh [--color] [--header] ${blue}para colorizar${clear}"
     echo    "       filesysteminfo.sh [-h] [--help] para imprimir ayuda"
 }
@@ -23,12 +23,20 @@ function tabla() {
             space=$(sudo df --all --output=fstype,target,size | grep $line | sort -k3 -r | head -n 1)
             total_space=$(sudo df --all --output=fstype,target,size | grep $line | 
                           awk 'BEGIN {printf "%s",$3} {sum+=$3} END {printf "%d",sum}')
-            id_dispositivo=$(sudo df --all --output=fstype,target,size | grep $line | sort -k3 -r | head -n 1 | 
-                             awk '{print $2}' | xargs -I{} sudo stat {} | grep -o "/.*[[:digit:]]d")
+            ##id_dispositivo=$(sudo df --all -T | grep $line | sort -k3 -r | head -n 1 | 
+            ##               awk '{print $1}' | xargs -I{} sudo stat --format "%t %T" {} 2> /dev/null) 
+            ##if [ "$id_dispositivo" != "" ]; then
+            ##    echo -e "$space\t\t$count\t$total_space\t\t$id_dispositivo"
+            ##else
+            ##    echo -e "$space\t\t$count\t$total_space\t\t*\t*"
+            ##fi
+            id_dispositivo=$(sudo df --all -T | grep $line | sort -k3 -r | head -n 1 | 
+                            awk '{print $1}' | xargs -I{} ls -l {} 2> /dev/null |
+                            awk '{print $5 $6}' | tr ',' ' ')
             if [ "$id_dispositivo" != "" ]; then
                 echo -e "$space\t\t$count\t$total_space\t\t$id_dispositivo"
-            else
-                echo -e "$space\t\t$count\t$total_space\t\t*"
+            else 
+                echo -e "$space\t\t$count\t$total_space\t\t*\t*"
             fi
     done <<< $output
 }
@@ -48,23 +56,15 @@ while [ "$1" != "" ]; do
         -inv )
             invert=$((1))
             ;;
-        --color )
-            color=$((1))
-            ;;
-        --header )
-            if [ "$color" = 1 ]; then
-                color_output=$(tabla | column -t -N "Type,Mounted on,Usage,Repetitions,TotalUsage,Devices ID")
-                echo -e "${blue}$color_output${clear}"
-                exit
-            fi
-            tabla | column -t -N "Type,Mounted on,Usage,Repetitions,TotalUsage,Devices ID"
+        --no-header )
+            tabla
             exit 0
             ;;
     esac
     shift
 done
     
-tabla
+tabla | column -t -N "Type,Mounted on,Usage,Repetitions,TotalUsage,Major ID,Minor ID"
 #modificacion
 
 # Fin Programa
