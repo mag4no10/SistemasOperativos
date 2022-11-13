@@ -8,8 +8,7 @@
 # Funciones:
 function usage() {
     echo    "Usage: filesysteminfo.sh [-inv] para invertir"
-    echo    "       filesysteminfo.sh [--no-header] para añadir una cabecera"
-    echo -e "       filesysteminfo.sh [--color] [--header] ${blue}para colorizar${clear}"
+    echo    "       filesysteminfo.sh [--no-header] para quitar la cabecera"
     echo    "       filesysteminfo.sh [-h] [--help] para imprimir ayuda"
 }
 
@@ -20,9 +19,9 @@ function tabla() {
     fi
     while read -r line; do
             count=$(sudo df --all --output=fstype,target,size | grep $line | wc -l)
-            space=$(sudo df --all --output=fstype,target,size | grep $line | sort -k3 -r | head -n 1)
-            total_space=$(sudo df --all --output=fstype,target,size | grep $line | 
-                          awk 'BEGIN {printf "%s",$3} {sum+=$3} END {printf "%d",sum}')
+            space=$(sudo df --all -T | grep $line | sort -k4 -r | head -n 1 | awk '{print $2, " ", $7, " ", $4}')
+            total_space=$(sudo df --all -T | grep $line | 
+                          awk 'BEGIN {printf "%s",$4} {sum+=$4} END {printf "%d",sum}')
             ##id_dispositivo=$(sudo df --all -T | grep $line | sort -k3 -r | head -n 1 | 
             ##               awk '{print $1}' | xargs -I{} sudo stat --format "%t %T" {} 2> /dev/null) 
             ##if [ "$id_dispositivo" != "" ]; then
