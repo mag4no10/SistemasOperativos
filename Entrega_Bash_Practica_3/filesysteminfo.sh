@@ -14,11 +14,21 @@
 
     bold=$(tput bold)
 
+    # Variables
+
 # Funciones:
+function column_command() {
+    column -t -N "${bold}${red}Type,Mounted on,Usage,${blue}Repetitions,${magenta}TotalUsage,${cyan}Major ID,${cyan}Minor ID,Permissions${clear}"
+}
+
 function usage() {
     echo    "Usage: filesysteminfo.sh [-inv] para invertir"
     echo    "       filesysteminfo.sh [--no-header] para quitar la cabecera"
     echo    "       filesysteminfo.sh [-h] [--help] para imprimir ayuda"
+}
+
+function errors() {
+    echo -e "Error en el uso de parametros, para mas ayuda escribir \"./filesysteminfo [-h / --help]\""
 }
 
 function tabla() {
@@ -31,18 +41,15 @@ function tabla() {
             space=$(sudo df --all -T | grep $line | sort -k4 -r | head -n 1 | awk '{print $2, " ", $7, " ", $4}')
             total_space=$(sudo df --all -T | grep $line | 
                           awk 'BEGIN {printf "%s",$4} {sum+=$4} END {printf "%d",sum}')
-            ##id_dispositivo=$(sudo df --all -T | grep $line | sort -k3 -r | head -n 1 | 
-            ##               awk '{print $1}' | xargs -I{} sudo stat --format "%t %T" {} 2> /dev/null) 
-            ##if [ "$id_dispositivo" != "" ]; then
-            ##    echo -e "$space\t\t$count\t$total_space\t\t$id_dispositivo"
-            ##else
-            ##    echo -e "$space\t\t$count\t$total_space\t\t*\t*"
-            ##fi
             id_dispositivo=$(sudo df --all -T | grep $line | sort -k3 -r | head -n 1 | 
                             awk '{print $1}' | xargs -I{} ls -l {} 2> /dev/null |
                             awk '{print $5 $6}' | tr ',' ' ')
+            permission=$(sudo df --all -T | grep $line | sort -k3 -r | head -n 1 | 
+                        awk '{print $1}' | xargs -I{} ls -l {} 2> /dev/null |
+                        awk '{print $1}')
+            
             if [ "$id_dispositivo" != "" ]; then
-                echo -e "${red}$space\t\t${blue}$count\t${magenta}$total_space\t\t${cyan}$id_dispositivo${clear}"
+                echo -e "${red}$space\t\t${blue}$count\t${magenta}$total_space\t\t${cyan}$id_dispositivo\t$permission${clear}"
             else 
                 echo -e "${red}$space\t\t${blue}$count\t${magenta}$total_space\t\t${cyan}*\t*${clear}"
             fi
@@ -67,14 +74,17 @@ while [ "$1" != "" ]; do
             tabla
             exit 0
             ;;
-        --devicefiles )
+        -devicefiles )
+            ;;
+        * )
+            errors
+            exit 1
             ;;
     esac
     shift
 done
-    
-tabla | column -t -N "${bold}${red}Type,Mounted on,Usage,${blue}Repetitions,${magenta}TotalUsage,${cyan}Major ID,${cyan}Minor ID${clear}"
-#modificacion
+
+tabla | column_command
 
 # Fin Programa
 exit 0 
