@@ -2,35 +2,79 @@
 
 # Macros:
     # Colors
-    clear='\033[0m'
-    blue='\033[0;38;5;57m'
+    clear=$(tput sgr0)
+    black=$(tput setaf 0)
+    red=$(tput setaf 1)
+    green=$(tput setaf 2)
+    yellow=$(tput setaf 3)
+    blue=$(tput setaf 4)
+    magenta=$(tput setaf 5)
+    cyan=$(tput setaf 6)
+    white=$(tput setaf 7)
+    pink=$(tput setaf 201)
+    bold=$(tput bold)
+
+    # Variables
 
 # Funciones:
-usage() {
+function prueba() {
+    echo -e "$users"
+}
+
+function column_command() {
+    if [ "$devicefiles" == 1 ]; then 
+        column -t -N "${bold}${red}Type,Mounted on,Usage,${blue}Repetitions,${magenta}TotalUsage,${cyan}Major ID,${cyan}Minor ID,${pink}Opened Files${clear}"    
+    else
+        column -t -N "${bold}${red}Type,Mounted on,Usage,${blue}Repetitions,${magenta}TotalUsage,${cyan}Major ID,${cyan}Minor ID${clear}"
+    fi
+}
+
+function usage() {
     echo    "Usage: filesysteminfo.sh [-inv] para invertir"
-    echo    "       filesysteminfo.sh [--header] para añadir una cabecera"
-    echo -e "       filesysteminfo.sh [--color] [--header] ${blue}para colorizar${clear}"
+    echo    "       filesysteminfo.sh [--no-header] para quitar la cabecera"
     echo    "       filesysteminfo.sh [-h] [--help] para imprimir ayuda"
 }
 
-filesysteminfo() {
+function errors() {
+    echo -e "Error en el uso de parametros, para mas ayuda escribir \"./filesysteminfo [-h / --help]\""
+}
+
+function tabla() {
     output=$(sudo df --all --output=fstype | sort | uniq | tail +3) 
     if [ "$invert" = 1 ]; then
         output=$(sudo df --all --output=fstype | sort | uniq | tail +3 | sort -r)
     fi
     while read -r line; do
             count=$(sudo df --all --output=fstype,target,size | grep $line | wc -l)
-            space=$(sudo df --all --output=fstype,target,size | grep $line | sort -k3 -r | head -n 1)
-            total_space=$(sudo df --all --output=fstype,target,size | grep $line | 
-                          awk 'BEGIN {printf "%s",$3} {sum+=$3} END {printf "%d",sum}')
-            echo -e "$space\t\t$count\t$total_space"
+            space=$(sudo df --all -T | grep $line | sort -k4 -r | head -n 1 | awk '{print $2, " ", $7, " ", $4}')
+            total_space=$(sudo df --all -T | grep $line | 
+                          awk 'BEGIN {printf "%s",$4} {sum+=$4} END {printf "%d",sum}')
+            id_dispositivo=$(sudo df --all -T | grep $line | sort -k3 -r | head -n 1 | 
+                            awk '{print $1}' | xargs -I{} ls -l {} 2> /dev/null |
+                            awk '{print $5 $6}' | tr ',' ' ')
+            permission=$(sudo df --all -T | grep $line | sort -k3 -r | head -n 1 | 
+                        awk '{print $1}' | xargs -I{} ls -l {} 2> /dev/null |
+                        awk '{print $1}')
+            if [ "$devicefiles" == 1 ]; then
+                if [ "$id_dispositivo" != "" ]; then
+                    open_files=$(sudo df --all -T | grep $line | awk '{print $7}' | xargs -I{} lsof +D {} 2> /dev/null | wc -l)
+                    echo -e "${red}$space\t\t${blue}$count\t${magenta}$total_space\t\t${cyan}$id_dispositivo\t${pink}$open_files${clear}"
+                fi
+            else
+                if [ "$id_dispositivo" != "" ]; then
+                    echo -e "${red}$space\t\t${blue}$count\t${magenta}$total_space\t\t${cyan}$id_dispositivo${clear}"
+                else 
+                    echo -e "${red}$space\t\t${blue}$count\t${magenta}$total_space\t\t${cyan}*\t*${clear}"
+                fi
+            fi
     done <<< $output
 }
 
-
+function modificacion() {
+    ps -A -o size --no-headers | awk 'BEGIN {printf "%s",$1} {sum+=$1} END {printf "%d\n",sum}'
+}
 
 # Programa principal:
-
 while [ "$1" != "" ]; do
     case $1 in 
         -h | --help )
@@ -40,23 +84,26 @@ while [ "$1" != "" ]; do
         -inv )
             invert=$((1))
             ;;
-        --color )
-            color=$((1))
-            ;;
-        --header )
-            if [ "$color" = 1 ]; then
-                color_output=$(filesysteminfo | column -t -N "Type,Mounted on,Usage,Repetitions,TotalUsage")
-                echo -e "${blue}$color_output${clear}"
-                exit
-            fi
-            filesysteminfo | column -t -N "Type,Mounted on,Usage,Repetitions,TotalUsage"
+        --no-header )
+            tabla
             exit 0
+            ;;
+        -devicefiles )
+            devicefiles=$((1))
+            ;;
+        -u )
+            users=$(echo -e "$@" | grep -o "\-u.*" | sed -e s/'-\w*$'// -e s/'-\w'//)
+            ;;    
+        * )
+            errors
+            exit 1
             ;;
     esac
     shift
 done
-    
-filesysteminfo
+
+#tabla | column_command
+prueba
 
 # Fin Programa
-exit 0
+exit 0 
