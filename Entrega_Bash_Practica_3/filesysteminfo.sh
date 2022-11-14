@@ -2,8 +2,17 @@
 
 # Macros:
     # Colors
-    clear='\033[0m'
-    blue='\033[0;38;5;57m'
+    clear=$(tput sgr0)
+    black=$(tput setaf 0)
+    red=$(tput setaf 1)
+    green=$(tput setaf 2)
+    yellow=$(tput setaf 3)
+    blue=$(tput setaf 4)
+    magenta=$(tput setaf 5)
+    cyan=$(tput setaf 6)
+    white=$(tput setaf 7)
+
+    bold=$(tput bold)
 
 # Funciones:
 function usage() {
@@ -33,9 +42,9 @@ function tabla() {
                             awk '{print $1}' | xargs -I{} ls -l {} 2> /dev/null |
                             awk '{print $5 $6}' | tr ',' ' ')
             if [ "$id_dispositivo" != "" ]; then
-                echo -e "$space\t\t$count\t$total_space\t\t$id_dispositivo"
+                echo -e "${red}$space\t\t${blue}$count\t${magenta}$total_space\t\t${cyan}$id_dispositivo${clear}"
             else 
-                echo -e "$space\t\t$count\t$total_space\t\t*\t*"
+                echo -e "${red}$space\t\t${blue}$count\t${magenta}$total_space\t\t${cyan}*\t*${clear}"
             fi
     done <<< $output
 }
@@ -45,7 +54,6 @@ function modificacion() {
 }
 
 # Programa principal:
-
 while [ "$1" != "" ]; do
     case $1 in 
         -h | --help )
@@ -59,11 +67,13 @@ while [ "$1" != "" ]; do
             tabla
             exit 0
             ;;
+        --devicefiles )
+            ;;
     esac
     shift
 done
     
-tabla | column -t -N "Type,Mounted on,Usage,Repetitions,TotalUsage,Major ID,Minor ID"
+tabla | column -t -N "${bold}${red}Type,Mounted on,Usage,${blue}Repetitions,${magenta}TotalUsage,${cyan}Major ID,${cyan}Minor ID${clear}"
 #modificacion
 
 # Fin Programa
