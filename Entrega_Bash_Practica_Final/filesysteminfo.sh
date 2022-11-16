@@ -17,12 +17,8 @@
     # Variables
 
 # Funciones:
-function prueba() {
-    echo -e "$users"
-}
-
 function column_command() {
-    if [ "$devicefiles" == 1 ]; then 
+    if [ "$devicefiles" == 1 ] || [ "$users" != "" ]; then 
         column -t -N "${bold}${red}Type,Mounted on,Usage,${blue}Repetitions,${magenta}TotalUsage,${cyan}Major ID,${cyan}Minor ID,${pink}Opened Files${clear}"    
     else
         column -t -N "${bold}${red}Type,Mounted on,Usage,${blue}Repetitions,${magenta}TotalUsage,${cyan}Major ID,${cyan}Minor ID${clear}"
@@ -55,16 +51,31 @@ function tabla() {
             permission=$(sudo df --all -T | grep $line | sort -k3 -r | head -n 1 | 
                         awk '{print $1}' | xargs -I{} ls -l {} 2> /dev/null |
                         awk '{print $1}')
-            if [ "$devicefiles" == 1 ]; then
+            if [ "$users" != "" ]; then
                 if [ "$id_dispositivo" != "" ]; then
-                    open_files=$(sudo df --all -T | grep $line | awk '{print $7}' | xargs -I{} lsof +D {} 2> /dev/null | wc -l)
+                    sum=$((0))
+                    for i in $users; do
+                        if [[ $(getent passwd | grep $i) ]]; then
+                            open_files=$(sudo df --all -T | grep $line | awk '{print $7}' | xargs -I{} sudo lsof -u $i +D {} 2> /dev/null | wc -l)
+                            sum=$(($sum + $open_files))
+                        else 
+                            open_files=$((0))
+                        fi
+                    done
                     echo -e "${red}$space\t\t${blue}$count\t${magenta}$total_space\t\t${cyan}$id_dispositivo\t${pink}$open_files${clear}"
                 fi
-            else
-                if [ "$id_dispositivo" != "" ]; then
-                    echo -e "${red}$space\t\t${blue}$count\t${magenta}$total_space\t\t${cyan}$id_dispositivo${clear}"
-                else 
-                    echo -e "${red}$space\t\t${blue}$count\t${magenta}$total_space\t\t${cyan}*\t*${clear}"
+            else 
+                if [ "$devicefiles" == 1 ]; then
+                    if [ "$id_dispositivo" != "" ]; then
+                        open_files=$(sudo df --all -T | grep $line | awk '{print $7}' | xargs -I{} lsof +D {} 2> /dev/null | wc -l)
+                        echo -e "${red}$space\t\t${blue}$count\t${magenta}$total_space\t\t${cyan}$id_dispositivo\t${pink}$open_files${clear}"
+                    fi
+                else
+                    if [ "$id_dispositivo" != "" ]; then
+                        echo -e "${red}$space\t\t${blue}$count\t${magenta}$total_space\t\t${cyan}$id_dispositivo${clear}"
+                    else 
+                        echo -e "${red}$space\t\t${blue}$count\t${magenta}$total_space\t\t${cyan}*\t*${clear}"
+                    fi
                 fi
             fi
     done <<< $output
@@ -85,25 +96,34 @@ while [ "$1" != "" ]; do
             invert=$((1))
             ;;
         --no-header )
-            tabla
+            tabla | column_command | tail +2
             exit 0
             ;;
         -devicefiles )
             devicefiles=$((1))
             ;;
         -u )
-            users=$(echo -e "$@" | grep -o "\-u.*" | sed -e s/'-\w*$'// -e s/'-\w'//)
-            ;;    
-        * )
-            errors
-            exit 1
+            users=$(echo -e "$@" | grep -o "\-u.*" | sed -e s/'-\w*$'// -e s/'-\w'// -e s/' '//)
             ;;
+        -sopen )
+            sopen=$((1))
+            ;;
+        -sdevice )
+            sdevice=$((1))
+            ;;    
+#        * )
+#            errors
+#            exit 1
+#            ;;
     esac
     shift
 done
 
-#tabla | column_command
-prueba
+if [ "$sdevice" == 1 ]; then
+    tabla | sort -k4
+else
+    tabla | column_command
+fi
 
 # Fin Programa
 exit 0 
