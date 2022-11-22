@@ -32,7 +32,11 @@ function usage() {
 }
 
 function errors() {
-    echo -e "Error en el uso de parametros, para mas ayuda escribir \"./filesysteminfo [-h / --help]\""
+    if [ "$error_users" = 1 ]; then
+        echo -e "Usuario/s no encontrado, revise el uso del programa escribiendo -h o --help"
+    else
+        echo -e "Error en el uso de parametros, para mas ayuda escribir \"./filesysteminfo [-h / --help]\""
+    fi
 }
 
 function tabla() {
@@ -53,16 +57,12 @@ function tabla() {
                         awk '{print $1}')
             if [ "$users" != "" ]; then
                 if [ "$id_dispositivo" != "" ]; then
-                    sum=$((0))
+                    sum=0
                     for i in $users; do
-                        if [[ $(getent passwd | grep $i) ]]; then
-                            open_files=$(sudo df --all -T | grep $line | awk '{print $7}' | xargs -I{} sudo lsof -u $i +D {} 2> /dev/null | wc -l)
-                            sum=$(($sum + $open_files))
-                        else 
-                            open_files=$((0))
-                        fi
+                        open_files=$(sudo df --all -T | grep $line | awk '{print $7}' | xargs -I{} sudo lsof -u $i +D {} 2> /dev/null | wc -l)
+                        sum=$(($sum + $open_files))
                     done
-                    echo -e "${red}$space\t\t${blue}$count\t${magenta}$total_space\t\t${cyan}$id_dispositivo\t${pink}$open_files${clear}"
+                    echo -e "${red}$space\t\t${blue}$count\t${magenta}$total_space\t\t${cyan}$id_dispositivo\t${pink}$sum${clear}"
                 fi
             else 
                 if [ "$devicefiles" == 1 ]; then
@@ -93,24 +93,33 @@ while [ "$1" != "" ]; do
             exit 0
             ;;
         -inv )
-            invert=$((1))
+            invert=1
             ;;
-        --no-header )
+        -noheader )
             tabla | column_command | tail +2
             exit 0
             ;;
         -devicefiles )
-            devicefiles=$((1))
-            ;;
-        -u )
-            users=$(echo -e "$@" | grep -o "\-u.*" | sed -e s/'-\w*$'// -e s/'-\w'// -e s/' '//)
+            devicefiles=1
             ;;
         -sopen )
-            sopen=$((1))
+            sopen=1
             ;;
         -sdevice )
-            sdevice=$((1))
-            ;;    
+            sdevice=1
+            ;;  
+        -u )
+            users=$(echo -e "$@" | grep -o "\-u.*" | sed -e s/'-\w*$'// -e s/'-\w'// -e s/' '//)
+            for i in $users; do
+                if ! [[ $(getent passwd | tr ':' ' '  | awk '{print $1}' | grep -w $i) ]]; then
+                    error_users=1
+                    errors
+                    exit 1
+                fi
+            
+            done
+            
+            ;;  
 #        * )
 #            errors
 #            exit 1
@@ -119,11 +128,7 @@ while [ "$1" != "" ]; do
     shift
 done
 
-if [ "$sdevice" == 1 ]; then
-    tabla | sort -k4
-else
-    tabla | column_command
-fi
+tabla | column_command
 
 # Fin Programa
 exit 0 
