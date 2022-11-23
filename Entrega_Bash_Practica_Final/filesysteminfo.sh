@@ -15,6 +15,12 @@
     bold=$(tput bold)
 
     # Variables
+    invert=0
+    noheader=0
+    devicefiles=0
+    sopen=0
+    sdevice=0
+    user_option=0
 
 # Funciones:
 function column_command() {
@@ -29,14 +35,18 @@ function usage() {
     echo    "Usage: filesysteminfo.sh [-inv] para invertir"
     echo    "       filesysteminfo.sh [--no-header] para quitar la cabecera"
     echo    "       filesysteminfo.sh [-h] [--help] para imprimir ayuda"
+    exit 0
 }
 
 function errors() {
     if [ "$error_users" = 1 ]; then
         echo -e "Usuario/s no encontrado, revise el uso del programa escribiendo -h o --help"
+    elif [ "$param_error" = 1 ]; then
+        echo -e "Error de configuracion de parametros, revise el uso del programa escribiendo -h o --help"
     else
         echo -e "Error en el uso de parametros, para mas ayuda escribir \"./filesysteminfo [-h / --help]\""
     fi
+    exit 1
 }
 
 function tabla() {
@@ -81,6 +91,32 @@ function tabla() {
     done <<< $output
 }
 
+function param_manager() {
+    if [ "$help" = 1 ]; then
+        usage
+    elif [ $(($invert + $sopen + $sdevice)) -gt 1 ] || [ "$sopen" = 1 ] && [ $(($devicefiles + $user_option)) -lt 1 ]; then
+        param_error=1
+        errors
+    elif [ "$sdevice" = 1 ]; then
+        if [ "$noheader" = 1 ]; then
+            tabla | sort -k4 | column_command | tail +2
+        else
+            tabla | sort -k4 | column_command
+        fi
+    elif [ "$sopen" = 1 ]; then
+        if [ "$noheader" = 1 ]; then
+            tabla | sort -k8 | column_command | tail +2
+        else
+            tabla | sort -k8 | column_command
+        fi
+    elif [ "$noheader" = 1 ]; then
+        tabla | column_command | tail +2
+    else
+        tabla | column_command
+    fi
+    exit 0
+}
+
 function modificacion() {
     ps -A -o size --no-headers | awk 'BEGIN {printf "%s",$1} {sum+=$1} END {printf "%d\n",sum}'
 }
@@ -89,15 +125,13 @@ function modificacion() {
 while [ "$1" != "" ]; do
     case $1 in 
         -h | --help )
-            usage
-            exit 0
+            help=1
             ;;
         -inv )
             invert=1
             ;;
         -noheader )
-            tabla | column_command | tail +2
-            exit 0
+            noheader=1
             ;;
         -devicefiles )
             devicefiles=1
@@ -109,26 +143,32 @@ while [ "$1" != "" ]; do
             sdevice=1
             ;;  
         -u )
+            devicefiles=1; user_option=1
             users=$(echo -e "$@" | grep -o "\-u.*" | sed -e s/'-\w*$'// -e s/'-\w'// -e s/' '//)
+            if [ "$users" == "" ]; then
+                users=0
+            fi
             for i in $users; do
                 if ! [[ $(getent passwd | tr ':' ' '  | awk '{print $1}' | grep -w $i) ]]; then
                     error_users=1
                     errors
-                    exit 1
                 fi
-            
             done
-            
-            ;;  
-#        * )
-#            errors
-#            exit 1
-#            ;;
+            ;;
+        -* )
+            errors
+            exit 1
+            ;;
+        * )
+            if ! [ "$user_option" = 1 ] && ! [ "$1" == -* ]; then
+                errors
+            fi
+            ;;
     esac
     shift
 done
 
-tabla | column_command
+param_manager
 
 # Fin Programa
 exit 0 
