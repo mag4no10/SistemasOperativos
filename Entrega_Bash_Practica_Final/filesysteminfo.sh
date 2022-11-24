@@ -2,17 +2,17 @@
 
 # Macros:
     # Colors
-    clear=$(tput sgr0)
-    black=$(tput setaf 0)
-    red=$(tput setaf 1)
-    green=$(tput setaf 2)
-    yellow=$(tput setaf 3)
-    blue=$(tput setaf 4)
-    magenta=$(tput setaf 5)
-    cyan=$(tput setaf 6)
-    white=$(tput setaf 7)
-    pink=$(tput setaf 201)
-    bold=$(tput bold)
+    Clear=$(tput sgr0)
+    Black=$(tput setaf 0)
+    Red=$(tput setaf 1)
+    Green=$(tput setaf 2)
+    Yellow=$(tput setaf 3)
+    Blue=$(tput setaf 4)
+    Magenta=$(tput setaf 5)
+    Cyan=$(tput setaf 6)
+    White=$(tput setaf 7)
+    Pink=$(tput setaf 201)
+    Bold=$(tput bold)
 
     # Variables
     invert=0
@@ -25,9 +25,9 @@
 # Funciones:
 function column_command() {
     if [ "$devicefiles" == 1 ] || [ "$users" != "" ]; then 
-        column -t -N "${bold}${red}Type,Mounted on,Usage,${blue}Repetitions,${magenta}TotalUsage,${cyan}Major ID,${cyan}Minor ID,${pink}Opened Files${clear}"    
+        column -t -N "${Bold}${Red}Type,Mounted on,Usage,${Blue}Repetitions,${Magenta}TotalUsage,${Cyan}Major ID,${Cyan}Minor ID,${Pink}Opened Files${Clear}"    
     else
-        column -t -N "${bold}${red}Type,Mounted on,Usage,${blue}Repetitions,${magenta}TotalUsage,${cyan}Major ID,${cyan}Minor ID${clear}"
+        column -t -N "${Bold}${Red}Type,Mounted on,Usage,${Blue}Repetitions,${Magenta}TotalUsage,${Cyan}Major ID,${Cyan}Minor ID${Clear}"
     fi
 }
 
@@ -57,7 +57,7 @@ function tabla() {
     while read -r line; do
             count=$(sudo df --all --output=fstype,target,size | grep $line | wc -l)
             space=$(sudo df --all -T | grep $line | sort -k4 -r | head -n 1 | awk '{print $2, " ", $7, " ", $4}')
-            total_space=$(sudo df --all -T | grep $line | 
+            total_space=$(sudo df --all -T | grep $line |
                           awk 'BEGIN {printf "%s",$4} {sum+=$4} END {printf "%d",sum}')
             id_dispositivo=$(sudo df --all -T | grep $line | sort -k3 -r | head -n 1 | 
                             awk '{print $1}' | xargs -I{} ls -l {} 2> /dev/null |
@@ -69,22 +69,26 @@ function tabla() {
                 if [ "$id_dispositivo" != "" ]; then
                     sum=0
                     for i in $users; do
-                        open_files=$(sudo df --all -T | grep $line | awk '{print $7}' | xargs -I{} sudo lsof -u $i +D {} 2> /dev/null | wc -l)
+                        if [ "$line" == "btrfs" ]; then
+                            open_files=$(sudo df --all -T | sudo lsof -u $i +D / 2> /dev/null | wc -l)
+                        else
+                            open_files=$(sudo df --all -T | grep $line | awk '{print $7}' | xargs -I{} sudo lsof -u $i +D {} 2> /dev/null | wc -l)
+                        fi
                         sum=$(($sum + $open_files))
                     done
-                    echo -e "${red}$space\t\t${blue}$count\t${magenta}$total_space\t\t${cyan}$id_dispositivo\t${pink}$sum${clear}"
+                    echo -e "${Red}$space\t\t${Blue}$count\t${Magenta}$total_space\t\t${Cyan}$id_dispositivo\t${Pink}$sum${Clear}"
                 fi
             else 
                 if [ "$devicefiles" == 1 ]; then
                     if [ "$id_dispositivo" != "" ]; then
                         open_files=$(sudo df --all -T | grep $line | awk '{print $7}' | xargs -I{} lsof +D {} 2> /dev/null | wc -l)
-                        echo -e "${red}$space\t\t${blue}$count\t${magenta}$total_space\t\t${cyan}$id_dispositivo\t${pink}$open_files${clear}"
+                        echo -e "${Red}$space\t\t${Blue}$count\t${Magenta}$total_space\t\t${Cyan}$id_dispositivo\t${Pink}$open_files${Clear}"
                     fi
                 else
                     if [ "$id_dispositivo" != "" ]; then
-                        echo -e "${red}$space\t\t${blue}$count\t${magenta}$total_space\t\t${cyan}$id_dispositivo${clear}"
+                        echo -e "${Red}$space\t\t${Blue}$count\t${Magenta}$total_space\t\t${Cyan}$id_dispositivo${Clear}"
                     else 
-                        echo -e "${red}$space\t\t${blue}$count\t${magenta}$total_space\t\t${cyan}*\t*${clear}"
+                        echo -e "${Red}$space\t\t${Blue}$count\t${Magenta}$total_space\t\t${Cyan}*\t*${Clear}"
                     fi
                 fi
             fi
