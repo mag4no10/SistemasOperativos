@@ -100,12 +100,12 @@ function tabla() {
     done <<< $output
 }
 
-#       Evaluates parameters and REDirects
+#       Evaluates parameters and redirects
 #       depending of the choose
 function param_manager() {
     if [ "$help" = 1 ]; then
         usage
-    elif [ $(($invert + $sopen + $sdevice)) -gt 1 ] || [ "$sopen" = 1 ] && [ $(($devicefiles + $user_option)) -lt 1 ]; then
+    elif [ $(($sopen + $sdevice)) -gt 1 ] || [ "$sopen" = 1 ] && [ $(($devicefiles + $user_option)) -lt 1 ]; then
         param_error=1
         errors
     elif [ "$sdevice" = 1 ]; then
