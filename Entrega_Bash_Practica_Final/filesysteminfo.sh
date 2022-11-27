@@ -40,6 +40,9 @@ function usage() {
     echo    "Usage: filesysteminfo.sh [-inv] para invertir"
     echo    "       filesysteminfo.sh [--no-header] para quitar la cabecera"
     echo    "       filesysteminfo.sh [-h] [--help] para imprimir ayuda"
+    echo    "       filesysteminfo.sh [-sopen] para ordenar por archivos abiertos"
+    echo    "       filesysteminfo.sh [-sdevice] para ordenar por numero de dispositivos del mismo tipo"
+    echo    "       filesysteminfo.sh [-u] para filtrar por usuarios"
     exit 0
 }
 
@@ -47,7 +50,11 @@ function usage() {
 #       depending of the error code      
 function errors() {
     if [ "$error_users" = 1 ]; then
-        echo -e "Usuario/s no encontrado, revise el uso del programa escribiendo -h o --help"
+        if [ "$usuario_erroneo" = 0 ]; then
+            echo -e "Usuario no especificado, revise el uso del programa escribiendo -h o --help"
+        else 
+            echo -e "Usuario \"$usuario_erroneo\" no encontrado, revise el uso del programa escribiendo -h o --help"
+        fi
     elif [ "$param_error" = 1 ]; then
         echo -e "Error de configuracion de parametros, revise el uso del programa escribiendo -h o --help"
     else
@@ -59,9 +66,9 @@ function errors() {
 #       Prints the chart and evaluates some 
 #       arguments
 function tabla() {
-    output=$(sudo df --all --output=fstype | sort | uniq | tail +3) 
+    output=$(sudo df --all --output=fstype | tail +2 | sort | uniq | tail +3) 
     if [ "$invert" = 1 ]; then
-        output=$(sudo df --all --output=fstype | sort | uniq | tail +3 | sort -r)
+        output=$(sudo df --all --output=fstype | tail +2 | sort | uniq | tail +3 | sort -r)
     fi
     while read -r line; do
             count=$(sudo df --all --output=fstype,target,size | grep $line | wc -l)
@@ -156,12 +163,14 @@ while [ "$1" != "" ]; do
             ;;  
         -u )
             devicefiles=1; user_option=1
-            users=$(echo -e "$@" | grep -o "\-u.*" | sed -e s/'-\w*$'// -e s/'-\w'// -e s/' '//)
+            #users=$(echo -e "$@" | grep -o "\-u.*" | sed -e s/'-\w*$'// -e s/'-\w'// -e s/' '//)
+            users=$(echo -e "$@" | grep -o "\-u.*" | sed -e s/'-\w'// -e s/'-\w.*'//)
             if [ "$users" == "" ]; then
                 users=0
             fi
             for i in $users; do
                 if ! [[ $(getent passwd | tr ':' ' '  | awk '{print $1}' | grep -w $i) ]]; then
+                    usuario_erroneo=$i
                     error_users=1
                     errors
                 fi
