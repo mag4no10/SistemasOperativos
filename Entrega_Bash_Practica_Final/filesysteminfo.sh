@@ -2,17 +2,17 @@
 
 # Macros:
     # Colors
-    Clear=$(tput sgr0)
-    Black=$(tput setaf 0)
-    Red=$(tput setaf 1)
-    Green=$(tput setaf 2)
-    Yellow=$(tput setaf 3)
-    Blue=$(tput setaf 4)
-    Magenta=$(tput setaf 5)
-    Cyan=$(tput setaf 6)
-    White=$(tput setaf 7)
-    Pink=$(tput setaf 201)
-    Bold=$(tput bold)
+    CLEAR=$(tput sgr0)
+    BLACK=$(tput setaf 0)
+    RED=$(tput setaf 1)
+    GREEN=$(tput setaf 2)
+    YELLOW=$(tput setaf 3)
+    BLUE=$(tput setaf 4)
+    MAGENTA=$(tput setaf 5)
+    CYAN=$(tput setaf 6)
+    WHITE=$(tput setaf 7)
+    PINK=$(tput setaf 201)
+    BOLD=$(tput bold)
 
     # Variables
     invert=0
@@ -21,16 +21,21 @@
     sopen=0
     sdevice=0
     user_option=0
+    counte=0
 
-# Funciones:
+# Functions
+
+#       Prints column command depending of
+#       the parameters 
 function column_command() {
     if [ "$devicefiles" == 1 ] || [ "$users" != "" ]; then 
-        column -t -N "${Bold}${Red}Type,Mounted on,Usage,${Blue}Repetitions,${Magenta}TotalUsage,${Cyan}Major ID,${Cyan}Minor ID,${Pink}Opened Files${Clear}"    
+        column -t -N "${BOLD}${RED}Type,Mounted on,Usage,${BLUE}Repetitions,${MAGENTA}TotalUsage,${CYAN}Major ID,${CYAN}Minor ID,${PINK}Opened Files${CLEAR}"    
     else
-        column -t -N "${Bold}${Red}Type,Mounted on,Usage,${Blue}Repetitions,${Magenta}TotalUsage,${Cyan}Major ID,${Cyan}Minor ID${Clear}"
+        column -t -N "${BOLD}${RED}Type,Mounted on,Usage,${BLUE}Repetitions,${MAGENTA}TotalUsage,${CYAN}Major ID,${CYAN}Minor ID${CLEAR}"
     fi
 }
 
+#       Print help [-h / --help]
 function usage() {
     echo    "Usage: filesysteminfo.sh [-inv] para invertir"
     echo    "       filesysteminfo.sh [--no-header] para quitar la cabecera"
@@ -38,6 +43,8 @@ function usage() {
     exit 0
 }
 
+#       Prints different error
+#       depending of the error code      
 function errors() {
     if [ "$error_users" = 1 ]; then
         echo -e "Usuario/s no encontrado, revise el uso del programa escribiendo -h o --help"
@@ -49,6 +56,8 @@ function errors() {
     exit 1
 }
 
+#       Prints the chart and evaluates some 
+#       arguments
 function tabla() {
     output=$(sudo df --all --output=fstype | sort | uniq | tail +3) 
     if [ "$invert" = 1 ]; then
@@ -60,41 +69,39 @@ function tabla() {
             total_space=$(sudo df --all -T | grep $line |
                           awk 'BEGIN {printf "%s",$4} {sum+=$4} END {printf "%d",sum}')
             id_dispositivo=$(sudo df --all -T | grep $line | sort -k3 -r | head -n 1 | 
-                            awk '{print $1}' | xargs -I{} ls -l {} 2> /dev/null |
-                            awk '{print $5 $6}' | tr ',' ' ')
+                             awk '{print $1}' | xargs -I{} ls -l {} 2> /dev/null |
+                             awk '{print $5 $6}' | tr ',' ' ')
             permission=$(sudo df --all -T | grep $line | sort -k3 -r | head -n 1 | 
-                        awk '{print $1}' | xargs -I{} ls -l {} 2> /dev/null |
-                        awk '{print $1}')
+                         awk '{print $1}' | xargs -I{} ls -l {} 2> /dev/null |
+                         awk '{print $1}')
             if [ "$users" != "" ]; then
                 if [ "$id_dispositivo" != "" ]; then
                     sum=0
                     for i in $users; do
-                        if [ "$line" == "btrfs" ]; then
-                            open_files=$(sudo df --all -T | sudo lsof -u $i +D / 2> /dev/null | wc -l)
-                        else
-                            open_files=$(sudo df --all -T | grep $line | awk '{print $7}' | xargs -I{} sudo lsof -u $i +D {} 2> /dev/null | wc -l)
-                        fi
+                        open_files=$(sudo df --all -T | grep $line | awk '{print $1}' | xargs -I{} sudo lsof -a -u $i {} 2> /dev/null | wc -l)
                         sum=$(($sum + $open_files))
                     done
-                    echo -e "${Red}$space\t\t${Blue}$count\t${Magenta}$total_space\t\t${Cyan}$id_dispositivo\t${Pink}$sum${Clear}"
+                    echo -e "${RED}$space\t\t${BLUE}$count\t${MAGENTA}$total_space\t\t${CYAN}$id_dispositivo\t${PINK}$sum${CLEAR}"
                 fi
-            else 
+            else
                 if [ "$devicefiles" == 1 ]; then
                     if [ "$id_dispositivo" != "" ]; then
-                        open_files=$(sudo df --all -T | grep $line | awk '{print $7}' | xargs -I{} lsof +D {} 2> /dev/null | wc -l)
-                        echo -e "${Red}$space\t\t${Blue}$count\t${Magenta}$total_space\t\t${Cyan}$id_dispositivo\t${Pink}$open_files${Clear}"
+                        open_files=$(sudo df --all -T | grep $line | awk '{print $1}' | xargs -I{} lsof -a {} 2> /dev/null | wc -l)
+                        echo -e "${RED}$space\t\t${BLUE}$count\t${MAGENTA}$total_space\t\t${CYAN}$id_dispositivo\t${PINK}$open_files${CLEAR}"
                     fi
                 else
                     if [ "$id_dispositivo" != "" ]; then
-                        echo -e "${Red}$space\t\t${Blue}$count\t${Magenta}$total_space\t\t${Cyan}$id_dispositivo${Clear}"
+                        echo -e "${RED}$space\t\t${BLUE}$count\t${MAGENTA}$total_space\t\t${CYAN}$id_dispositivo${CLEAR}"
                     else 
-                        echo -e "${Red}$space\t\t${Blue}$count\t${Magenta}$total_space\t\t${Cyan}*\t*${Clear}"
+                        echo -e "${RED}$space\t\t${BLUE}$count\t${MAGENTA}$total_space\t\t${CYAN}*\t*${CLEAR}"
                     fi
                 fi
             fi
     done <<< $output
 }
 
+#       Evaluates parameters and REDirects
+#       depending of the choose
 function param_manager() {
     if [ "$help" = 1 ]; then
         usage
@@ -118,9 +125,10 @@ function param_manager() {
     else
         tabla | column_command
     fi
-    exit 0
 }
 
+#       Prints the total size of the 
+#       current running processes
 function modificacion() {
     ps -A -o size --no-headers | awk 'BEGIN {printf "%s",$1} {sum+=$1} END {printf "%d\n",sum}'
 }
