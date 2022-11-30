@@ -117,15 +117,15 @@ function param_manager() {
         errors
     elif [ "$sdevice" = 1 ]; then
         if [ "$noheader" = 1 ]; then
-            tabla | sort -k4 | column_command | tail +2
+            tabla | sort -nk4 | column_command | tail +2
         else
-            tabla | sort -k4 | column_command
+            tabla | sort -nk4 | column_command
         fi
     elif [ "$sopen" = 1 ]; then
         if [ "$noheader" = 1 ]; then
-            tabla | sort -k8 | column_command | tail +2
+            tabla | sort -nk8 | column_command | tail +2
         else
-            tabla | sort -k8 | column_command
+            tabla | sort -nk8 | column_command
         fi
     elif [ "$noheader" = 1 ]; then
         tabla | column_command | tail +2
@@ -163,7 +163,6 @@ while [ "$1" != "" ]; do
             ;;  
         -u )
             devicefiles=1; user_option=1
-            #users=$(echo -e "$@" | grep -o "\-u.*" | sed -e s/'-\w*$'// -e s/'-\w'// -e s/' '//)
             users=$(echo -e "$@" | grep -o "\-u.*" | sed -e s/'-\w'// -e s/'-\w.*'//)
             if [ "$users" == "" ]; then
                 users=0
