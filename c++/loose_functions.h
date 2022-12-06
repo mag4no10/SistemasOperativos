@@ -8,11 +8,11 @@ std::string getenv(
 );
 
 std::string dirname(
-    const std::string& path
+    std::string& path
 );
 
 std::string basename(
-    const std::string& path
+    std::string& path
 );
 
 void information(

@@ -1,10 +1,11 @@
 #include <iostream>
 #include <vector>
 #include <limits.h>    // MAX_PATH
+#include <libgen.h>    // DIRNAME & BASENAME
 
 #include "loose_functions.h"
 
-std::string dirname(const std::string& path) {
+std::string dirname(std::string& path) {
     std::vector<char> buffer(PATH_MAX);
     path.copy(buffer.data(), buffer.size());
     std::string dir = dirname(buffer.data());
@@ -12,7 +13,7 @@ std::string dirname(const std::string& path) {
     return dir;
 }
 
-std::string basename(const std::string& path) {
+std::string basename(std::string& path) {
     std::vector<char> buffer(PATH_MAX);
     path.copy(buffer.data(), buffer.size());
     std::string file_name = basename(buffer.data());

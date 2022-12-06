@@ -9,7 +9,7 @@
 #include "loose_functions.h"
 
 
-void copy_file(const std::string& src_path, std::string dst_path, bool preserve_all=false) {
+void copy_file(const std::string& src_path, const std::string& dst_path, bool preserve_all=false) {
     struct stat src_st, dst_st;
     if (stat(src_path.c_str(), &src_st) == -1) {
         //error
@@ -22,7 +22,7 @@ void copy_file(const std::string& src_path, std::string dst_path, bool preserve_
             //error
         }
         if (S_ISDIR(dst_st.st_mode)) {
-            dst_path = dirname(dst_path) + basename(src_path);
+            //dst_path = dirname(dst_path) + "/" + basename(src_path);
         }
     }
 
@@ -70,14 +70,16 @@ void copy_file(const std::string& src_path, std::string dst_path, bool preserve_
     }
 }
 
-void move_file(const std::string& src_path, std::string& dst_path) {
+void move_file(const std::string& src_path, const std::string& dst_path) {
     struct stat src_st, dst_st;
     if (stat(src_path.c_str(), &src_st) == -1) {
         //error
     }
-    if (stat(dst_path.c_str(), &dst_st) != -1 ) {
-        dst_path = dirname(dst_path) + basename(src_path);
+    std::cout << dst_path << std::endl;
+    if (S_ISDIR(dst_st.st_mode)) {
+        //dst_path = dirname(dst_path) + "/" + basename(src_path);
     }
+        std::cout << dst_path << std::endl;
     if (src_st.st_dev == dst_st.st_dev && src_st.st_ino == dst_st.st_ino) {
         rename(src_path.c_str(), dst_path.c_str());
         return;
