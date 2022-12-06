@@ -5,8 +5,8 @@
 
 void copy_file(
     const std::string& src_path, 
-    const std::string& dst_path,
-    bool preserve_all=false
+    std::string dst_path,
+    bool preserve_all
 );
 
 void move_file(
@@ -18,26 +18,12 @@ std::string getenv(
     const std::string& name
 );
 
-int reads(
+int read(
     int fd, 
     std::vector<uint8_t>& buf
 );
 
-ssize_t write(
+int write(
     int fd, 
-    const void* buf, 
-    size_t count
+    std::vector<uint8_t>& buf
 );
-
-/*
-int open(
-    const char* pathname, 
-    int flags
-);
-
-int open(
-    const char* pathname,
-    int flags,
-    mode_t mode
-);
-*/
