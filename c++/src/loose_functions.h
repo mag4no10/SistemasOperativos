@@ -11,7 +11,7 @@ std::string dirname(
     std::string& path
 );
 
-std::string basename(
+std::string basename_(
     std::string& path
 );
 

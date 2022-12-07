@@ -9,7 +9,7 @@
 #include "loose_functions.h"
 
 
-void copy_file(const std::string& src_path, const std::string& dst_path, bool preserve_all=false) {
+void copy_file(const std::string& src_path, std::string& dst_path, bool preserve_all=false) {
     struct stat src_st, dst_st;
     if (stat(src_path.c_str(), &src_st) == -1) {
         //error
@@ -22,7 +22,8 @@ void copy_file(const std::string& src_path, const std::string& dst_path, bool pr
             //error
         }
         if (S_ISDIR(dst_st.st_mode)) {
-            //dst_path = dirname(dst_path) + "/" + basename(src_path);
+            std::string dst_path_copy(dst_path), src_path_copy(src_path);
+            dst_path = dirname(dst_path_copy) + "/" + basename_(dst_path_copy) + "/" + basename_(src_path_copy);
         }
     }
 
@@ -36,7 +37,7 @@ void copy_file(const std::string& src_path, const std::string& dst_path, bool pr
     if (dst_fd < 0) {
         //error
     }
-
+    
     ssize_t bytes_left = src_st.st_size;
     while (bytes_left >= 0) {
         read(src_fd, buffer);
@@ -44,7 +45,7 @@ void copy_file(const std::string& src_path, const std::string& dst_path, bool pr
         write(dst_fd, buffer);
         bytes_left = bytes_left - bytes_leidos;
         buffer.clear();
-        if (bytes_left < 0) {
+        if (bytes_left <= 0) {
             break;
         }
         buffer.resize(bytes_left);
@@ -70,18 +71,20 @@ void copy_file(const std::string& src_path, const std::string& dst_path, bool pr
     }
 }
 
-void move_file(const std::string& src_path, const std::string& dst_path) {
+void move_file(const std::string& src_path, std::string& dst_path) {
     struct stat src_st, dst_st;
     if (stat(src_path.c_str(), &src_st) == -1) {
         //error
     }
-    std::cout << dst_path << std::endl;
-    if (S_ISDIR(dst_st.st_mode)) {
-        //dst_path = dirname(dst_path) + "/" + basename(src_path);
+    if (stat(dst_path.c_str(), &dst_st) == -1) {
+        //error
     }
-        std::cout << dst_path << std::endl;
+    if (S_ISDIR(dst_st.st_mode)) {
+        std::string dst_path_copy(dst_path), src_path_copy(src_path);
+        dst_path = dirname(dst_path_copy) + "/" + basename_(dst_path_copy) + "/" + basename_(src_path_copy);    
+    }
     if (src_st.st_dev == dst_st.st_dev && src_st.st_ino == dst_st.st_ino) {
-        rename(src_path.c_str(), dst_path.c_str());
+        rename(dst_path.c_str(), src_path.c_str());
         return;
     }
     bool preserve;
@@ -100,5 +103,8 @@ int read(int fd, std::vector<uint8_t>& buffer) {
 
 int write(int fd, std::vector<uint8_t>& buffer) {
     ssize_t bytes_written = write(fd, buffer.data(), buffer.size());
+    if (bytes_written < 0) {
+        //codigo error
+    }
     return 0;
 }

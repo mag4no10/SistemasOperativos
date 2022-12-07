@@ -5,13 +5,13 @@
 
 void copy_file(
     const std::string& src_path, 
-    const std::string& dst_path,
+    std::string& dst_path,
     bool preserve_all
 );
 
 void move_file(
     const std::string& src_path, 
-    const std::string& dst_path
+    std::string& dst_path
 );
 
 int read(

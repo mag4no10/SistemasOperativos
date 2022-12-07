@@ -13,7 +13,7 @@ std::string dirname(std::string& path) {
     return dir;
 }
 
-std::string basename(std::string& path) {
+std::string basename_(std::string& path) {
     std::vector<char> buffer(PATH_MAX);
     path.copy(buffer.data(), buffer.size());
     std::string file_name = basename(buffer.data());
@@ -40,7 +40,7 @@ void information() {
 void usage(int argc, char* argv[]) {
     std::string arg1(argv[1]);
     if (arg1 == "-h" || arg1 == "--help") {
-        information;
+        information();
         exit(EXIT_SUCCESS);
     }
     if (argc != 4) {
