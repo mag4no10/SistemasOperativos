@@ -1,5 +1,6 @@
 #Makefile Jonay Faas Garcia 13/12/2021
 
+SHELL := /bin/bash
 CXX = g++
 CXXFLAGS = -Wall -std=c++17
 ######################################
@@ -30,8 +31,10 @@ help:
 ######################################
 .PHONY: test1
 test1:
+	@chmod u+x ./test/test1.sh
 	@./test/test1.sh
 
 .PHONY: test2
 test2:
+	@chmod u+x ./test/test2.sh
 	@./test/test2.sh
