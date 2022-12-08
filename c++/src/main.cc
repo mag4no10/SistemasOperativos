@@ -24,5 +24,12 @@ int main(int argc, char* argv[]) {
             std::cerr << "Error: " << error.message() << error.value() << std::endl;
         }
     }
+    else {         
+        bool preserve;
+        std::error_code error = copy_file(src_path, dst_path, preserve = false);
+        if (error) {
+            std::cerr << "Error: " << error.message() << error.value() << std::endl;
+        }
+    }
     return 0;
 }

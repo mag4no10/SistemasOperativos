@@ -43,7 +43,7 @@ void usage(int argc, char* argv[]) {
         information();
         exit(EXIT_SUCCESS);
     }
-    if (argc != 4) {
+    if (argc < 3 || argc > 4) {
         std::cout << "Numero de argumentos insuficientes, escriba " << 
         "\"./mini_terminal -h\" para imprimir el funcionamiento del sistema" << std::endl;
         exit(EXIT_FAILURE);

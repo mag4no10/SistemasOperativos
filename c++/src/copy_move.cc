@@ -8,6 +8,7 @@
 
 #include "copy_move.h"
 #include "loose_functions.h"
+#include "scope.hpp"
 
 
 std::error_code copy_file(const std::string& src_path, std::string& dst_path, bool preserve_all=false) {
@@ -40,11 +41,17 @@ std::error_code copy_file(const std::string& src_path, std::string& dst_path, bo
         // error si no se puede abrir src_path
         return std::error_code(errno, std::system_category());
     }
+    auto src_guard = scope::scope_exit(
+        [src_fd] { close(src_fd); }
+    );
     int dst_fd = open(dst_path.c_str(), O_WRONLY | O_TRUNC | O_CREAT, 0666);
     if (dst_fd < 0) {
         // error si no se puede abrir dst_path
         return std::error_code(errno, std::system_category());
     }
+    auto dst_guard = scope::scope_exit(
+        [dst_fd] { close(dst_fd); }
+    );
     
     ssize_t bytes_left = src_st.st_size;
     ssize_t bytes_leidos{0};
