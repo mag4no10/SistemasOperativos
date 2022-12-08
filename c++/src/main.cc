@@ -1,4 +1,5 @@
 #include <iostream>
+#include <system_error>
 
 #include "copy_move.h"
 #include "loose_functions.h"
@@ -11,14 +12,17 @@ int main(int argc, char* argv[]) {
     std::string dst_path (argv[3]);
 
     if (mode == "-m") {
-        move_file(src_path, dst_path);
+        std::error_code error = move_file(src_path, dst_path);
+        if (error) {
+            std::cerr << "Error: " << error.message() << error.value() << std::endl;
+        }
     }
     else if (mode == "-a") {
-        bool preserve;;
-        copy_file(src_path, dst_path, preserve = true);
-    }
-    else {
-        //error
+        bool preserve;
+        std::error_code error = copy_file(src_path, dst_path, preserve = true);
+        if (error) {
+            std::cerr << "Error: " << error.message() << error.value() << std::endl;
+        }
     }
     return 0;
 }

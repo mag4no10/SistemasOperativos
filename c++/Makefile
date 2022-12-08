@@ -1,4 +1,4 @@
-#Makefile Jonay Faas Garcia 13/12/2021
+#Makefile Jonay Faas Garcia
 
 SHELL := /bin/bash
 CXX = g++

@@ -3,13 +3,13 @@
 #include <iostream>
 #include <vector>
 
-void copy_file(
+std::error_code copy_file(
     const std::string& src_path, 
     std::string& dst_path,
     bool preserve_all
 );
 
-void move_file(
+std::error_code move_file(
     const std::string& src_path, 
     std::string& dst_path
 );

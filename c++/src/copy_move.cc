@@ -1,27 +1,33 @@
 #include <iostream>
 #include <vector>
-#include <sys/stat.h>  // stat
-#include <unistd.h>    // close
-#include <fcntl.h>     // open
-#include <utime.h>     // utime
+#include <sys/stat.h>     // stat
+#include <unistd.h>       // close
+#include <fcntl.h>        // open
+#include <utime.h>        // utime
+#include <system_error>   // class error
 
 #include "copy_move.h"
 #include "loose_functions.h"
 
 
-void copy_file(const std::string& src_path, std::string& dst_path, bool preserve_all=false) {
+std::error_code copy_file(const std::string& src_path, std::string& dst_path, bool preserve_all=false) {
     struct stat src_st, dst_st;
     if (stat(src_path.c_str(), &src_st) == -1) {
-        //error
+        // error si src_path no existe
+        return std::error_code(errno, std::system_category());
     }
     if (!S_ISREG(src_st.st_mode)) {
-        //error
+        // error si src_path no es un archivo regular
+        return std::error_code(errno, std::system_category());
     }
     if (stat(dst_path.c_str(), &dst_st) != -1 ) {
         if (src_st.st_dev == dst_st.st_dev && src_st.st_ino == dst_st.st_ino) {
-            //error
+            // error si src_path y dst_path son el mismo archivo dentro
+            // del mismo dispositivo
+            return std::error_code(errno, std::system_category());
         }
         if (S_ISDIR(dst_st.st_mode)) {
+            // si dst_path es un directorio, dst_path es dst_path + basename de src_path 
             std::string dst_path_copy(dst_path), src_path_copy(src_path);
             dst_path = dirname(dst_path_copy) + "/" + basename_(dst_path_copy) + "/" + basename_(src_path_copy);
         }
@@ -31,18 +37,27 @@ void copy_file(const std::string& src_path, std::string& dst_path, bool preserve
 
     int src_fd = open(src_path.c_str(),O_RDONLY);
     if (src_fd < 0) {
-        //error
+        // error si no se puede abrir src_path
+        return std::error_code(errno, std::system_category());
     }
     int dst_fd = open(dst_path.c_str(), O_WRONLY | O_TRUNC | O_CREAT, 0666);
     if (dst_fd < 0) {
-        //error
+        // error si no se puede abrir dst_path
+        return std::error_code(errno, std::system_category());
     }
     
     ssize_t bytes_left = src_st.st_size;
+    ssize_t bytes_leidos{0};
     while (bytes_left >= 0) {
-        read(src_fd, buffer);
-        ssize_t bytes_leidos = bytes_leidos + buffer.size();
-        write(dst_fd, buffer);
+        bool error1 = read(src_fd, buffer);
+        if (error1) {
+            return std::error_code(errno, std::system_category());
+        }
+        bytes_leidos = bytes_leidos + buffer.size();
+        bool error2 = write(dst_fd, buffer);
+        if (error2) {
+            return std::error_code(errno, std::system_category());
+        }
         bytes_left = bytes_left - bytes_leidos;
         buffer.clear();
         if (bytes_left <= 0) {
@@ -56,55 +71,88 @@ void copy_file(const std::string& src_path, std::string& dst_path, bool preserve
 
     if (preserve_all) {
         mode_t src_file_permission = src_st.st_mode & ~S_IFMT;
-        chmod(dst_path.c_str(), src_file_permission);
+        int error3 = chmod(dst_path.c_str(), src_file_permission);
+        if (error3 == -1) {
+            return std::error_code(errno, std::system_category());
+        }
 
         uid_t src_file_owner = src_st.st_uid;
         uid_t src_file_group = src_st.st_gid;
-        chown(dst_path.c_str(), src_file_owner, src_file_group);
+        int error4 = chown(dst_path.c_str(), src_file_owner, src_file_group);
+        if (error4 == -1) {
+            return std::error_code(errno, std::system_category());
+        }
 
         time_t src_last_access = src_st.st_atime;
         time_t src_last_modification = src_st.st_mtime;
         struct utimbuf src_uti;
         src_uti.actime = src_last_access;
         src_uti.modtime = src_last_modification;
-        utime(dst_path.c_str(), &src_uti);
+        int error5 = utime(dst_path.c_str(), &src_uti);
+        if (error5 == -1) {
+            return std::error_code(errno, std::system_category());
+        }
     }
+    return std::error_code(0, std::system_category());
 }
 
-void move_file(const std::string& src_path, std::string& dst_path) {
+std::error_code move_file(const std::string& src_path, std::string& dst_path) {
     struct stat src_st, dst_st;
     if (stat(src_path.c_str(), &src_st) == -1) {
-        //error
+        // error si src_path no existe
+        return std::error_code(errno, std::system_category());
     }
     if (stat(dst_path.c_str(), &dst_st) == -1) {
-        //error
+        // error si dst_path no existe
+        return std::error_code(errno, std::system_category());
     }
     if (S_ISDIR(dst_st.st_mode)) {
+        // si dst_path es un directorio, dst_path es dst_path + basename de src_path 
         std::string dst_path_copy(dst_path), src_path_copy(src_path);
         dst_path = dirname(dst_path_copy) + "/" + basename_(dst_path_copy) + "/" + basename_(src_path_copy);    
     }
     if (src_st.st_dev == dst_st.st_dev && src_st.st_ino == dst_st.st_ino) {
-        rename(dst_path.c_str(), src_path.c_str());
-        return;
+        // si src_path y dst_path son el mismo archivo dentro
+        // del mismo dispositivo, dst_path se renombra a src
+        int error1 = rename(dst_path.c_str(), src_path.c_str());
+        if (error1 == -1) {
+            return std::error_code(errno, std::system_category());
+        }
+        return std::error_code(0, std::system_category());;
     }
     bool preserve;
-    copy_file(src_path, dst_path, preserve = true);
-    unlink(src_path.c_str());
+    std::error_code error2 = copy_file(src_path, dst_path, preserve = true);
+    if (error2) {
+        return std::error_code(errno, std::system_category());
+    }
+    int error3 = unlink(src_path.c_str());
+    if (error3 == -1) {
+        return std::error_code(errno, std::system_category());
+    }
+
+    return std::error_code(0, std::system_category());
 }
 
 int read(int fd, std::vector<uint8_t>& buffer) {
-    ssize_t bytes_read = read(fd, buffer.data(), buffer.size());
+    uint32_t bytes_read = read(fd, buffer.data(), buffer.size());
     if (bytes_read < 0) {
-        //codigo error
+        return 1;
     }
     buffer.resize(bytes_read);
     return 0;
 }
 
 int write(int fd, std::vector<uint8_t>& buffer) {
-    ssize_t bytes_written = write(fd, buffer.data(), buffer.size());
+    uint32_t bytes_written = write(fd, buffer.data(), buffer.size());
     if (bytes_written < 0) {
-        //codigo error
+        return 1;
+    }
+    if (bytes_written < buffer.size()) {
+        uint32_t bytes_left = buffer.size() - bytes_written;
+        bytes_written = write(fd, buffer.data(), bytes_left);
+        if (bytes_written < buffer.size()) { 
+            return 1;
+        }
     }
     return 0;
 }

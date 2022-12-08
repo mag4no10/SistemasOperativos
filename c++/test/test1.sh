@@ -1,7 +1,5 @@
 #!/bin/bash
 
-binary=./bin/mini_terminal
-
 touch ./tmp/example.txt && echo "1 2 3, Juan Periquito y Andres" > ./tmp/example.txt
 echo "example.txt: "
 cat ./tmp/example.txt
@@ -9,7 +7,9 @@ touch ./tmp/example2.txt && echo "" > ./tmp/example2.txt
 echo "example2.txt: "
 cat ./tmp/example2.txt
 
-$binary -a ./tmp/example.txt ./tmp/example2.txt
+cd ./bin/
+./mini_terminal -a ../tmp/example.txt ../tmp/example2.txt
+cd ../
 
 echo "------------"
 echo "example.txt: "
