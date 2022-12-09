@@ -36,7 +36,7 @@ std::error_code copy_file(const std::string& src_path, std::string& dst_path, bo
 
     std::vector<uint8_t> buffer(16ul * 1024 * 1024);
 
-    int src_fd = open(src_path.c_str(),O_RDONLY);
+    int src_fd = open(src_path.c_str(), O_RDONLY);
     if (src_fd < 0) {
         // error si no se puede abrir src_path
         return std::error_code(errno, std::system_category());
