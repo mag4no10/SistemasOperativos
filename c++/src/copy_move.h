@@ -14,12 +14,12 @@ std::error_code move_file(
     std::string& dst_path
 );
 
-int read(
+std::error_code read(
     int fd, 
     std::vector<uint8_t>& buf
 );
 
-int write(
+std::error_code write(
     int fd, 
     std::vector<uint8_t>& buf
 );

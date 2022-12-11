@@ -15,17 +15,17 @@ std::error_code copy_file(const std::string& src_path, std::string& dst_path, bo
     struct stat src_st, dst_st;
     if (stat(src_path.c_str(), &src_st) == -1) {
         // error si src_path no existe
-        return std::error_code(errno, std::system_category());
+        return std::error_code(EACCES, std::system_category());
     }
     if (!S_ISREG(src_st.st_mode)) {
         // error si src_path no es un archivo regular
-        return std::error_code(errno, std::system_category());
+        return std::error_code(EACCES, std::system_category());
     }
     if (stat(dst_path.c_str(), &dst_st) != -1 ) {
         if (src_st.st_dev == dst_st.st_dev && src_st.st_ino == dst_st.st_ino) {
             // error si src_path y dst_path son el mismo archivo dentro
             // del mismo dispositivo
-            return std::error_code(errno, std::system_category());
+            return std::error_code(EEXIST, std::system_category());
         }
         if (S_ISDIR(dst_st.st_mode)) {
             // si dst_path es un directorio, dst_path es dst_path + basename de src_path 
@@ -39,7 +39,7 @@ std::error_code copy_file(const std::string& src_path, std::string& dst_path, bo
     int src_fd = open(src_path.c_str(), O_RDONLY);
     if (src_fd < 0) {
         // error si no se puede abrir src_path
-        return std::error_code(errno, std::system_category());
+        return std::error_code(EBADF, std::system_category());
     }
     auto src_guard = scope::scope_exit(
         [src_fd] { close(src_fd); }
@@ -47,7 +47,7 @@ std::error_code copy_file(const std::string& src_path, std::string& dst_path, bo
     int dst_fd = open(dst_path.c_str(), O_WRONLY | O_TRUNC | O_CREAT, 0666);
     if (dst_fd < 0) {
         // error si no se puede abrir dst_path
-        return std::error_code(errno, std::system_category());
+        return std::error_code(EBADF, std::system_category());
     }
     auto dst_guard = scope::scope_exit(
         [dst_fd] { close(dst_fd); }
@@ -56,14 +56,14 @@ std::error_code copy_file(const std::string& src_path, std::string& dst_path, bo
     ssize_t bytes_left = src_st.st_size;
     ssize_t bytes_leidos{0};
     while (bytes_left >= 0) {
-        bool error1 = read(src_fd, buffer);
+        std::error_code error1 = read(src_fd, buffer);
         if (error1) {
-            return std::error_code(errno, std::system_category());
+            return error1;
         }
         bytes_leidos = bytes_leidos + buffer.size();
-        bool error2 = write(dst_fd, buffer);
+        std::error_code error2 = write(dst_fd, buffer);
         if (error2) {
-            return std::error_code(errno, std::system_category());
+            return error2;
         }
         bytes_left = bytes_left - bytes_leidos;
         buffer.clear();
@@ -107,11 +107,11 @@ std::error_code move_file(const std::string& src_path, std::string& dst_path) {
     struct stat src_st, dst_st;
     if (stat(src_path.c_str(), &src_st) == -1) {
         // error si src_path no existe
-        return std::error_code(errno, std::system_category());
+        return std::error_code(EACCES, std::system_category());
     }
     if (stat(dst_path.c_str(), &dst_st) == -1) {
         // error si dst_path no existe
-        return std::error_code(errno, std::system_category());
+        return std::error_code(EACCES, std::system_category());
     }
     if (S_ISDIR(dst_st.st_mode)) {
         // si dst_path es un directorio, dst_path es dst_path + basename de src_path 
@@ -125,12 +125,12 @@ std::error_code move_file(const std::string& src_path, std::string& dst_path) {
         if (error1 == -1) {
             return std::error_code(errno, std::system_category());
         }
-        return std::error_code(0, std::system_category());;
+        return std::error_code(0, std::system_category());
     }
     bool preserve;
     std::error_code error2 = copy_file(src_path, dst_path, preserve = true);
     if (error2) {
-        return std::error_code(errno, std::system_category());
+        return error2;
     }
     int error3 = unlink(src_path.c_str());
     if (error3 == -1) {
@@ -140,26 +140,26 @@ std::error_code move_file(const std::string& src_path, std::string& dst_path) {
     return std::error_code(0, std::system_category());
 }
 
-int read(int fd, std::vector<uint8_t>& buffer) {
+std::error_code read(int fd, std::vector<uint8_t>& buffer) {
     uint32_t bytes_read = read(fd, buffer.data(), buffer.size());
     if (bytes_read < 0) {
-        return 1;
+        return std::error_code(EIO, std::system_category());
     }
     buffer.resize(bytes_read);
-    return 0;
+    return std::error_code(0, std::system_category());
 }
 
-int write(int fd, std::vector<uint8_t>& buffer) {
+std::error_code write(int fd, std::vector<uint8_t>& buffer) {
     uint32_t bytes_written = write(fd, buffer.data(), buffer.size());
     if (bytes_written < 0) {
-        return 1;
+        return std::error_code(EIO, std::system_category());
     }
     if (bytes_written < buffer.size()) {
         uint32_t bytes_left = buffer.size() - bytes_written;
         bytes_written = write(fd, buffer.data() + bytes_written, bytes_left);
         if (bytes_written < buffer.size()) { 
-            return 1;
+            return std::error_code(ENOMEM, std::system_category());
         }
     }
-    return 0;
+    return std::error_code(0, std::system_category());
 }
