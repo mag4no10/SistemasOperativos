@@ -156,7 +156,7 @@ int write(int fd, std::vector<uint8_t>& buffer) {
     }
     if (bytes_written < buffer.size()) {
         uint32_t bytes_left = buffer.size() - bytes_written;
-        bytes_written = write(fd, buffer.data(), bytes_left);
+        bytes_written = write(fd, buffer.data() + bytes_written, bytes_left);
         if (bytes_written < buffer.size()) { 
             return 1;
         }
