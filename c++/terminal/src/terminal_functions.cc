@@ -3,7 +3,7 @@
 #include <vector>
 #include <string>
 #include <algorithm>
-#include <unistd.h> //getlogin_r gethostname getcwd isatty STDOUT_FILENO
+#include <unistd.h> //getlogin_r gethostname getcwd isatty STDOUT_FILENO STDIN_FILENO
 #include <limits.h> //host, login, path max
 
 #include "terminal_functions.h"
@@ -46,15 +46,33 @@ std::error_code read_line(int fd, std::string& line) {
     pending_input.resize(16ul * 1024);
     read(fd,pending_input);
     int counter{1};
-    for (const uint8_t i: pending_input) {
-        if (i == '\n') {
-            //std::copy(pending_input.begin(), pending_input.begin() + counter, line.begin());
-            //pending_input.erase(pending_input.begin(),pending_input.begin()+counter);
-            //return std::error_code(0, std::system_category());
+    while(true) {
+        for (const uint8_t i: pending_input) {
+            if (i == '\n') {
+                std::string hola(pending_input.begin(), pending_input.begin()+counter);
+                line = hola;
+                std::copy(pending_input.begin(), pending_input.begin() + counter, line.begin());
+                pending_input.erase(pending_input.begin(),pending_input.begin()+counter);
+                return std::error_code(0, std::system_category());
+            }
+            counter++;
         }
-        counter++;
+        std::vector<uint8_t> buffer(512);
+        std::error_code error = read(fd,buffer);
+        if (error) {
+            return error;
+        }
+        if (buffer.size() == 0) {
+            if (pending_input.size() != 0) {
+                std::copy(pending_input.begin(), pending_input.end(), line.begin());
+                line = line + "\n";
+                pending_input.clear();
+                return std::error_code(0,std::system_category());
+            }
+        }
+        else {
+            pending_input.insert(pending_input.end(), buffer.begin(), buffer.end());
+        }
     }
-    //not finished
-
     return std::error_code(0, std::system_category());
 }
