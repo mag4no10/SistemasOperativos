@@ -2,7 +2,7 @@
 
 SHELL := /bin/bash
 CXX = g++
-CXXFLAGS = -Wall -std=c++17
+CXXFLAGS = -Wall -std=c++20
 ######################################
 files = ./src/*.cc
 ######################################

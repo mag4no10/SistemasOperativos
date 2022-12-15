@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <unistd.h> //getlogin_r gethostname getcwd isatty STDOUT_FILENO STDIN_FILENO
 #include <limits.h> //host, login, path max
+#include <sstream> //istringstream
 
 #include "terminal_functions.h"
 
@@ -49,10 +50,8 @@ std::error_code read_line(int fd, std::string& line) {
     while(true) {
         for (const uint8_t i: pending_input) {
             if (i == '\n') {
-                std::string hola(pending_input.begin(), pending_input.begin()+counter);
-                line = hola;
-                std::copy(pending_input.begin(), pending_input.begin() + counter, line.begin());
-                pending_input.erase(pending_input.begin(),pending_input.begin()+counter);
+                line.assign(pending_input.begin(), pending_input.begin()+counter);
+                pending_input.erase(pending_input.begin(), pending_input.begin()+counter);
                 return std::error_code(0, std::system_category());
             }
             counter++;
@@ -75,4 +74,21 @@ std::error_code read_line(int fd, std::string& line) {
         }
     }
     return std::error_code(0, std::system_category());
+}
+
+std::vector<shell::command> parse_line(const std::string& line) {
+    std::istringstream iss(line);
+    std::vector<shell::command> result;
+    std::vector<std::string> words;
+    while (!iss.eof()) {
+        std::string word;
+        iss >> word;
+
+        if (word.ends_with("&")) {
+            std::cout << word;
+        }
+
+        words.push_back(word);
+    }
+    return result;
 }
