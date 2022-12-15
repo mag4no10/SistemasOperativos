@@ -19,12 +19,12 @@ mini_terminal: $(files)
 .PHONY: clean
 clean:
 	@echo "Cleaning up the directory..."
-	@rm -rf *.o *gch *.out programa
+	@rm -rf ./bin/*.o ./bn/*gch ./bin/*.out ./bin/mini_terminal
 ######################################
 .PHONY: help
 help:
 	@echo "${BOLD}make${CLEAR} -> compile"
-	@echo "${BOLD}make clean${CLEAR} -> clean [.out/.o] files"
+	@echo "${BOLD}make clean${CLEAR} -> remove [.out/.o] files"
 	@echo "${BOLD}make test1${CLEAR} -> not_full_buffer copy"
 	@echo "${BOLD}make test2${CLEAR} -> recursive_full_buffer copy"
 
