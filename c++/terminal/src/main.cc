@@ -13,7 +13,7 @@ int main(int argc, char* argv[]) {
             if (!list_of_commands.empty()) {
                 auto [return_value, is_quit_requested] = execute_commands(list_of_commands);
                 if (is_quit_requested) {
-                    last_command_status = return_value;
+                    //last_command_status = return_value;
                     //break;
                 }
             }

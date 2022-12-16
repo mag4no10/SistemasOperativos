@@ -45,7 +45,7 @@ void print_prompt(const int& last_command_status) {
 }
 
 std::error_code read_line(int fd, std::string& line) {
-    pending_input.resize(16ul * 1024);
+    pending_input.resize(512ul);
     read(fd,pending_input);
     int counter{1};
     while(true) {
@@ -57,7 +57,7 @@ std::error_code read_line(int fd, std::string& line) {
             }
             counter++;
         }
-        std::vector<uint8_t> buffer(512);
+        std::vector<uint8_t> buffer(512ul);
         std::error_code error = read(fd,buffer);
         if (error) {
             return error;
@@ -91,7 +91,7 @@ std::vector<shell::command> parse_line(const std::string& line) {
                     word.pop_back();
                 }
                 words.push_back(word);
-                words.push_back(std::string(""+i));
+                //words.push_back(std::string(""+i));      ESTO DA ERROR DE M_ALLOC
                 result.push_back(words);
                 words.clear();
             }
@@ -128,7 +128,7 @@ shell::command_result execute_commands(const std::vector<shell::command>& comman
             //std::cout << "Has llamado a move" << std::endl;
         }
         //for (std::string j : i) {
-            //std::cout << j;
+            //std::cout << j << " ";
         //}
         //std::cout << std::endl;
     }
