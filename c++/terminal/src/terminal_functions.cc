@@ -27,19 +27,20 @@ std::error_code read(int fd, std::vector<uint8_t>& buffer) {
 }
 
 void print_prompt(const int& last_command_status) {
-    if (!last_command_status && isatty(STDIN_FILENO)) {
-        char hostname[HOST_NAME_MAX];
-        char username[LOGIN_NAME_MAX];
-        char current_path[PATH_MAX];
-        getlogin_r(username, LOGIN_NAME_MAX);
-        gethostname(hostname,HOST_NAME_MAX);
-        getcwd(current_path,PATH_MAX);
+    char hostname[HOST_NAME_MAX];
+    char username[LOGIN_NAME_MAX];
+    char current_path[PATH_MAX];
+    getlogin_r(username, LOGIN_NAME_MAX);
+    gethostname(hostname,HOST_NAME_MAX);
+    getcwd(current_path,PATH_MAX);
         
-        std::string prompt = std::string(username) + "@" + std::string(hostname) + ":" + std::string(current_path) + " $> ";
+    if (!last_command_status && isatty(STDIN_FILENO)) {
+        std::string prompt = "╭─" + std::string(username) + "@" + std::string(hostname) + ":" + std::string(current_path) + "\n╰─$> ";
         print(prompt);
     }
     else {
-        std::cout << "$< ";
+        std::string prompt = "╭─" + std::string(username) + "@" + std::string(hostname) + ":" + std::string(current_path) + "\n╰─$< ";
+        print(prompt);
     }
 }
 
@@ -84,11 +85,52 @@ std::vector<shell::command> parse_line(const std::string& line) {
         std::string word;
         iss >> word;
 
-        if (word.ends_with("&")) {
-            std::cout << word;
+        for (char i : word) {
+            if (i == ';' || i == '&' || i == '|') {
+                if (word.ends_with(';') || word.ends_with('&') || word.ends_with('|')) {
+                    word.pop_back();
+                }
+                words.push_back(word);
+                words.push_back(std::string(""+i));
+                result.push_back(words);
+                words.clear();
+            }
         }
-
+        if (word.starts_with("#")) {
+            break;
+        }
         words.push_back(word);
     }
+    result.push_back(words);
     return result;
+}
+
+shell::command_result execute_commands(const std::vector<shell::command>& commands) {
+    int return_value{0};
+    for (std::vector<std::string> i : commands) {
+        if (i.back() == ";" || i.back() == "|" || i.back() == "&") {
+            i.pop_back();
+        }
+        if (i.front() == "echo") {
+            //llamo a echo
+            //std::cout << "Has llamado a echo" << std::endl;
+        }
+        else if (i.front() == "cd") {
+            //llamo a cd
+            //std::cout << "Has llamado a cd" << std::endl;
+        }
+        else if (i.front() == "cp") {
+            //llamo a cp
+            //std::cout << "Has llamado a copy" << std::endl;
+        }
+        else if (i.front() == "mv") {
+            //llamo a mv
+            //std::cout << "Has llamado a move" << std::endl;
+        }
+        //for (std::string j : i) {
+            //std::cout << j;
+        //}
+        //std::cout << std::endl;
+    }
+    return shell::command_result::quit(return_value);
 }
