@@ -14,7 +14,7 @@ int main(int argc, char* argv[]) {
                 auto [return_value, is_quit_requested] = execute_commands(list_of_commands);
                 if (is_quit_requested) {
                     last_command_status = return_value;
-                    continue;
+                    break;
                 }
             }
         }

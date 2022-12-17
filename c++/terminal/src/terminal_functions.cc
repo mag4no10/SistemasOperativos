@@ -83,15 +83,17 @@ std::vector<shell::command> parse_line(const std::string& line) {
             words.clear();
             continue;
         }
+        std::string word_former;
         for (char i : word) {
-            if (i == ';' || i == '&' || i == '|') {
-                words.push_back(word);
+            if (i == ';' || i == '|') {
+                words.push_back(word_former);
                 std::string aux;
                 aux.push_back(i);
                 words.push_back(aux);
                 result.push_back(words);
                 words.clear();
             }
+            word_former = word_former + i;
         }
         words.push_back(word);
     }
@@ -116,6 +118,10 @@ shell::command_result execute_commands(const std::vector<shell::command>& comman
         }
         else if (i.front() == "mv") {
             mv_command(i);
+        }
+        else {
+            bool has_to_wait = true;
+            execute_program(i,has_to_wait);
         }
     }
     return shell::command_result::quit(return_value);

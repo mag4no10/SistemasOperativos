@@ -1,19 +1,20 @@
 #Makefile Jonay Faas Garcia
 
 SHELL := /bin/bash
+TARGET = mini_terminal
 CXX = g++
-CXXFLAGS = -Wall -std=c++20
+CXXFLAGS = -Wall -std=c++20 -O1 -o $(TARGET)
 ######################################
 files = ./src/*.cc
 ######################################
 BOLD   := $(shell tput bold)
 CLEAR  := $(shell tput sgr0)
 ######################################
-all: mini_terminal
+all: $(TARGET)
 
-mini_terminal: $(files)
-	@$(CXX) $(CXXFLAGS) -o mini_terminal $(files)
-	@mv mini_terminal ./bin/
+$(TARGET): $(files)
+	@$(CXX) $(CXXFLAGS) $(files)
+	@mv $(TARGET) ./bin/
 
 ######################################
 .PHONY: clean

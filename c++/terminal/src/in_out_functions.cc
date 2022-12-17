@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <utime.h>
 #include <fcntl.h>
+#include <string>
 
 #include "in_out_functions.h"
 #include "loose_functions.h"
@@ -167,6 +168,16 @@ int mv_command(const std::vector<std::string>& args) {
     if (error3 == -1) {
         //error unlink
     }
+
+    return 0;
+}
+
+int execute_program(const std::vector<std::string>& args, bool has_wait=true) {
+    //std::string program_name = args.at(0);
+    //bool unknown;
+
+    //pid_t child = fork();
+    
 
     return 0;
 }
