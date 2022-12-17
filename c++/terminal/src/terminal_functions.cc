@@ -8,23 +8,9 @@
 #include <sstream> //istringstream
 
 #include "terminal_functions.h"
+#include "in_out_functions.h"
+#include "loose_functions.h"
 
-std::error_code print(const std::string& str) {
-    uint32_t bytes_written = write(STDOUT_FILENO, str.c_str(), str.size());
-    if (bytes_written < 0) {
-        //Manejar error
-    }
-    return std::error_code(0, std::system_category());
-}
-
-std::error_code read(int fd, std::vector<uint8_t>& buffer) {
-    uint32_t bytes_read = read(fd, buffer.data(), buffer.size());
-    if (bytes_read < 0) {
-        return std::error_code(EIO, std::system_category());
-    }
-    buffer.resize(bytes_read);
-    return std::error_code(0, std::system_category());
-}
 
 void print_prompt(const int& last_command_status) {
     char hostname[HOST_NAME_MAX];
@@ -84,20 +70,28 @@ std::vector<shell::command> parse_line(const std::string& line) {
     while (!iss.eof()) {
         std::string word;
         iss >> word;
-
+        if (word.starts_with("#")) {
+            break;
+        }
+        if (word.ends_with(';') || word.ends_with('&') || word.ends_with('|')) {
+            std::string aux;
+            aux.push_back(word.back());
+            word.pop_back();
+            words.push_back(word);
+            words.push_back(aux);
+            result.push_back(words);
+            words.clear();
+            continue;
+        }
         for (char i : word) {
             if (i == ';' || i == '&' || i == '|') {
-                if (word.ends_with(';') || word.ends_with('&') || word.ends_with('|')) {
-                    word.pop_back();
-                }
                 words.push_back(word);
-                //words.push_back(std::string(""+i));      ESTO DA ERROR DE M_ALLOC
+                std::string aux;
+                aux.push_back(i);
+                words.push_back(aux);
                 result.push_back(words);
                 words.clear();
             }
-        }
-        if (word.starts_with("#")) {
-            break;
         }
         words.push_back(word);
     }
@@ -108,29 +102,21 @@ std::vector<shell::command> parse_line(const std::string& line) {
 shell::command_result execute_commands(const std::vector<shell::command>& commands) {
     int return_value{0};
     for (std::vector<std::string> i : commands) {
-        if (i.back() == ";" || i.back() == "|" || i.back() == "&") {
+        if (i.back() == ";" || i.back() == "|" || i.back() == "&" || i.back() == "") {
             i.pop_back();
         }
         if (i.front() == "echo") {
-            //llamo a echo
-            //std::cout << "Has llamado a echo" << std::endl;
+            echo_command(i);
         }
         else if (i.front() == "cd") {
-            //llamo a cd
-            //std::cout << "Has llamado a cd" << std::endl;
+            cd_command(i);
         }
         else if (i.front() == "cp") {
-            //llamo a cp
-            //std::cout << "Has llamado a copy" << std::endl;
+            cp_command(i);
         }
         else if (i.front() == "mv") {
-            //llamo a mv
-            //std::cout << "Has llamado a move" << std::endl;
+            mv_command(i);
         }
-        //for (std::string j : i) {
-            //std::cout << j << " ";
-        //}
-        //std::cout << std::endl;
     }
     return shell::command_result::quit(return_value);
 }
