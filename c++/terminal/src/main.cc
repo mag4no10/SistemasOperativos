@@ -4,6 +4,7 @@
 #include "in_out_functions.h"
 #include "terminal_functions.h"
 
+
 int main(int argc, char* argv[]) {
     while (true) {
         print_prompt(last_command_status);

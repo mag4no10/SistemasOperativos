@@ -125,13 +125,15 @@ shell::command_result execute_commands(const std::vector<shell::command>& comman
         else if (i.front() == "clear") {
             return_value = clear_command();
         }
+        else if (i.front() == "") {
+            return shell::command_result(return_value,false);
+        }
         else {
             bool has_to_wait = true;
-            int status_code = execute_program(i,has_to_wait);
-            if (status_code) {
-                std::cout << "terminal: Unknown command" << std::endl;
-                return_value = 1;
+            if (i.back() == "&") {
+                has_to_wait = false;
             }
+            int output = execute_program(i,has_to_wait);
         }
     }
     return shell::command_result{return_value, false};

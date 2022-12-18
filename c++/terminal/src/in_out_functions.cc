@@ -6,6 +6,8 @@
 #include <utime.h>
 #include <fcntl.h>
 #include <string>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #include "in_out_functions.h"
 #include "loose_functions.h"
@@ -191,9 +193,23 @@ int execute_program(const std::vector<std::string>& args, bool has_wait=true) {
         argv.push_back(i.c_str());
     }
     argv.push_back(NULL);
-    int status_code = execvp(argv[0], const_cast<char* const*>(argv.data()));
-    if (status_code < 0) {
-        return 1;
+    const char* program_name = argv[0];
+    pid_t child = fork(); 
+    if (child == 0) {
+        int out{42};
+        int status_code = execvp(program_name, const_cast<char* const*>(argv.data()));
+        if (status_code < 0) {
+            // error
+        }
+        return out;
+    }
+    else if (child > 0) {
+        int out;
+        wait(&out);
+        return 0;
+    }
+    else {
+        //fork peto
     }
     return 0;
 }
