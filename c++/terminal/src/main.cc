@@ -12,8 +12,8 @@ int main(int argc, char* argv[]) {
             std::vector<shell::command> list_of_commands = parse_line(linea);
             if (!list_of_commands.empty()) {
                 auto [return_value, is_quit_requested] = execute_commands(list_of_commands);
+                last_command_status = return_value;
                 if (is_quit_requested) {
-                    last_command_status = return_value;
                     break;
                 }
             }

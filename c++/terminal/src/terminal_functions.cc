@@ -108,21 +108,31 @@ shell::command_result execute_commands(const std::vector<shell::command>& comman
             i.pop_back();
         }
         if (i.front() == "echo") {
-            echo_command(i);
+            return_value = echo_command(i);
         }
         else if (i.front() == "cd") {
-            cd_command(i);
+            return_value = cd_command(i);
         }
         else if (i.front() == "cp") {
-            cp_command(i);
+            return_value = cp_command(i);
         }
         else if (i.front() == "mv") {
-            mv_command(i);
+            return_value = mv_command(i);
+        }
+        else if (i.front() == "exit") {
+            return shell::command_result::quit(return_value);
+        }
+        else if (i.front() == "clear") {
+            return_value = clear_command();
         }
         else {
             bool has_to_wait = true;
-            execute_program(i,has_to_wait);
+            int status_code = execute_program(i,has_to_wait);
+            if (status_code) {
+                std::cout << "terminal: Unknown command" << std::endl;
+                return_value = 1;
+            }
         }
     }
-    return shell::command_result::quit(return_value);
+    return shell::command_result{return_value, false};
 }

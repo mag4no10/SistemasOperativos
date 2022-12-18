@@ -172,12 +172,28 @@ int mv_command(const std::vector<std::string>& args) {
     return 0;
 }
 
+int clear_command() {
+    if (OS_Windows == 0) {
+        std::system("clear");
+    }
+    else if (OS_Windows == 1) {
+        std::system("cls");
+    }
+    else {
+        std::cout << "Operating system not supported" << std::endl;
+    }
+    return 0;
+}
+
 int execute_program(const std::vector<std::string>& args, bool has_wait=true) {
-    //std::string program_name = args.at(0);
-    //bool unknown;
-
-    //pid_t child = fork();
-    
-
+    std::vector<const char*> argv;
+    for(std::string i : args) {
+        argv.push_back(i.c_str());
+    }
+    argv.push_back(NULL);
+    int status_code = execvp(argv[0], const_cast<char* const*>(argv.data()));
+    if (status_code < 0) {
+        return 1;
+    }
     return 0;
 }
