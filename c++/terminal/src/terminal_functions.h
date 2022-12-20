@@ -21,6 +21,15 @@ namespace shell {
             return command_result{return_value, true};
         }
     };
+    struct execute_result {
+        int pid;
+        std::string command_name;
+        int output_value;
+        execute_result(int pid, std::string command_name, int output_value) :
+        pid{pid}, 
+        command_name{command_name},
+        output_value{output_value} {}
+    };
 }
 
 inline std::vector<uint8_t> pending_input(0);
@@ -31,4 +40,4 @@ std::error_code print_prompt(const int&);
 std::error_code read_line(int, std::string&);
 std::vector<shell::command> parse_line(const std::string&);
 shell::command_result execute_commands(const std::vector<shell::command>&);
-int execute_program(const std::vector<std::string>&, bool);
+shell::execute_result execute_program(const std::vector<std::string>&, bool);

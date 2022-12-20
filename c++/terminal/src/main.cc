@@ -3,7 +3,9 @@
 
 /*TODO 
 *   OUTPUT: COLORS
-*   FINISH
+*   EOF
+*   PROGRAMS BACKGROUND
+*   INNER PROGRAMS BACKGROUND
 **/
 
 int main(int argc, char* argv[]) {

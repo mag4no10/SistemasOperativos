@@ -14,7 +14,7 @@ std::error_code echo_command(const std::vector<std::string>& args) {
         output = output + i + " ";
         counter++;
     }
-    output = output+'\n';
+    output = output + '\n';
     std::cout << output;
     return std::error_code(0, std::system_category());
 }

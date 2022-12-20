@@ -169,8 +169,8 @@ shell::command_result execute_commands(const std::vector<shell::command>& comman
             if (i.back() == "&") {
                 has_to_wait = false;
             }
-            int output = execute_program(i,has_to_wait);
-            if (output == 1) {
+            auto [pid, command_name, output_value] = execute_program(i,has_to_wait);
+            if (output_value == 1) {
                 return_value = 1;
             }
         }
@@ -178,7 +178,7 @@ shell::command_result execute_commands(const std::vector<shell::command>& comman
     return shell::command_result{return_value, false};
 }
 
-int execute_program(const std::vector<std::string>& args, bool has_wait=true) {
+shell::execute_result execute_program(const std::vector<std::string>& args, bool has_wait=true) {
     std::vector<const char*> argv;
     for(uint64_t i = 0; i < args.size(); i++) {
         argv.push_back(args[i].c_str());
@@ -186,30 +186,35 @@ int execute_program(const std::vector<std::string>& args, bool has_wait=true) {
     argv.push_back(NULL);
     const char* program_name = argv[0];
     pid_t cpid = fork(); 
-    if (cpid == 0) {
-        int status_code = execvp(program_name, const_cast<char* const*>(argv.data()));
-        if (status_code < 0) {
-            std::cout << "terminal: unknown command" << std::endl;
-            _exit(1);
+    if (has_wait == true) {
+        if (cpid == 0) {
+            int status_code = execvp(program_name, const_cast<char* const*>(argv.data()));
+            if (status_code < 0) {
+                std::cout << "terminal: unknown command" << std::endl;
+                _exit(1);
+            }
+            _exit(0);
         }
-        _exit(0);
-    }
-    else if (cpid > 0) {
-        int status;
-        if (wait(&status) == -1) {
-            perror("wait() failed");
-            return 1;
+        else if (cpid > 0) {
+            int status;
+            if (wait(&status) == -1) {
+                perror("wait() failed");
+                return shell::execute_result{cpid,program_name,1};
+            }
+            else {
+                int child_returned = WEXITSTATUS(status);
+                if (child_returned == 1) {
+                    return shell::execute_result{cpid,program_name,1};
+                }
+                return shell::execute_result{cpid,program_name,0};
+            }
         }
         else {
-            int child_returned = WEXITSTATUS(status);
-            if (child_returned == 1) {
-                return 1;
-            }
-            return 0;
+            return shell::execute_result{cpid,program_name,1};
         }
     }
     else {
-        return 1;
+
     }
-    return 0;
+    return shell::execute_result{cpid,program_name,0};
 }
