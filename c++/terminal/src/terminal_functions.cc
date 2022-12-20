@@ -1,26 +1,32 @@
-#include <iostream>
-#include <system_error>
-#include <vector>
-#include <string>
-#include <algorithm>
-#include <unistd.h> //getlogin_r gethostname getcwd isatty STDOUT_FILENO STDIN_FILENO
-#include <limits.h> //host, login, path max
-#include <sstream> //istringstream
-
 #include "terminal_functions.h"
 #include "in_out_functions.h"
 #include "loose_functions.h"
 
 
-void print_prompt(const int& last_command_status) {
+std::error_code print_prompt(const int& last_command_status) {
+    if (!isatty(STDIN_FILENO)) {
+        return std::error_code(0, std::system_category());
+    }
     char hostname[HOST_NAME_MAX];
     char username[LOGIN_NAME_MAX];
     char current_path[PATH_MAX];
-    getlogin_r(username, LOGIN_NAME_MAX);
-    gethostname(hostname,HOST_NAME_MAX);
-    getcwd(current_path,PATH_MAX);
+    int error = getlogin_r(username, LOGIN_NAME_MAX);
+    if (error != 0) {
+        perror("No se ha podido obtener el nombre de usuario");
+        return std::error_code(errno, std::system_category());
+    }
+    int error1 = gethostname(hostname,HOST_NAME_MAX);
+    if (error1 != 0) {
+        perror("No se ha podido obtener el nombre de host");
+        return std::error_code(errno, std::system_category());
+    }
+    char* error2 = getcwd(current_path,PATH_MAX);
+    if (error2 == NULL) {
+        perror("No se ha podido obtener el directorio actual");
+        return std::error_code(errno, std::system_category());
+    }
         
-    if (!last_command_status && isatty(STDIN_FILENO)) {
+    if (!last_command_status) {
         std::string prompt = "╭─" + std::string(username) + "@" + std::string(hostname) + ":" + std::string(current_path) + "\n╰─$> ";
         print(prompt);
     }
@@ -28,11 +34,23 @@ void print_prompt(const int& last_command_status) {
         std::string prompt = "╭─" + std::string(username) + "@" + std::string(hostname) + ":" + std::string(current_path) + "\n╰─$< ";
         print(prompt);
     }
+    return std::error_code(0, std::system_category());
 }
 
 std::error_code read_line(int fd, std::string& line) {
     pending_input.resize(512ul);
-    read(fd,pending_input);
+    std::error_code error = read(fd,pending_input);
+    if (error) {
+        return error;
+    }
+    if (!isatty(STDIN_FILENO)) {
+        pending_input.push_back('\n');
+    }
+    if (pending_input.empty()) {
+        line.clear();
+        line += '\n';
+        return std::error_code(0, std::system_category());
+    }
     int counter{1};
     while(true) {
         for (const uint8_t i: pending_input) {
@@ -58,6 +76,9 @@ std::error_code read_line(int fd, std::string& line) {
         }
         else {
             pending_input.insert(pending_input.end(), buffer.begin(), buffer.end());
+        }
+        if (pending_input.empty()) {
+            linea.clear();
         }
     }
     return std::error_code(0, std::system_category());
@@ -108,22 +129,37 @@ shell::command_result execute_commands(const std::vector<shell::command>& comman
             i.pop_back();
         }
         if (i.front() == "echo") {
-            return_value = echo_command(i);
+            std::error_code error = echo_command(i);
+            if (error) {
+                return_value = 1;
+            }
         }
         else if (i.front() == "cd") {
-            return_value = cd_command(i);
+            std::error_code error1 = cd_command(i);
+            if (error1) {
+                return_value = 1;
+            }
         }
         else if (i.front() == "cp") {
-            return_value = cp_command(i);
+            std::error_code error2 = cp_command(i);
+            if (error2) {
+                return_value = 1;
+            }
         }
         else if (i.front() == "mv") {
-            return_value = mv_command(i);
+            std::error_code error3 = mv_command(i);
+            if (error3) {
+                return_value = 1;
+            }
         }
         else if (i.front() == "exit") {
             return shell::command_result::quit(return_value);
         }
         else if (i.front() == "clear") {
-            return_value = clear_command();
+            std::error_code error4 = clear_command();
+            if (error4) {
+                return_value = 1;
+            }
         }
         else if (i.front() == "") {
             return shell::command_result(return_value,false);
@@ -134,7 +170,46 @@ shell::command_result execute_commands(const std::vector<shell::command>& comman
                 has_to_wait = false;
             }
             int output = execute_program(i,has_to_wait);
+            if (output == 1) {
+                return_value = 1;
+            }
         }
     }
     return shell::command_result{return_value, false};
+}
+
+int execute_program(const std::vector<std::string>& args, bool has_wait=true) {
+    std::vector<const char*> argv;
+    for(uint64_t i = 0; i < args.size(); i++) {
+        argv.push_back(args[i].c_str());
+    }
+    argv.push_back(NULL);
+    const char* program_name = argv[0];
+    pid_t cpid = fork(); 
+    if (cpid == 0) {
+        int status_code = execvp(program_name, const_cast<char* const*>(argv.data()));
+        if (status_code < 0) {
+            std::cout << "terminal: unknown command" << std::endl;
+            _exit(1);
+        }
+        _exit(0);
+    }
+    else if (cpid > 0) {
+        int status;
+        if (wait(&status) == -1) {
+            perror("wait() failed");
+            return 1;
+        }
+        else {
+            int child_returned = WEXITSTATUS(status);
+            if (child_returned == 1) {
+                return 1;
+            }
+            return 0;
+        }
+    }
+    else {
+        return 1;
+    }
+    return 0;
 }

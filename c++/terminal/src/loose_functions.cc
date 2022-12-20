@@ -1,18 +1,10 @@
-#include <iostream>
-#include <vector>
-#include <limits.h>
-#include <libgen.h>
-#include <unistd.h>
+#include <iostream>      //Basic input and output
+#include <vector>        //std::vector
+#include <limits.h>      //LOGIN_NAME_MAX, PATH_MAX
+#include <libgen.h>      //dirname, basename
+#include <unistd.h>      //write, read, 
 
 #include "loose_functions.h"
-
-void usage(int argc, char* argv[]) {
-    
-}
-
-void information() {
-
-}
 
 std::string dirname(std::string& path) {
     std::vector<char> buffer(PATH_MAX);
@@ -33,7 +25,7 @@ std::string basename_(std::string& path) {
 std::error_code print(const std::string& str) {
     uint32_t bytes_written = write(STDOUT_FILENO, str.c_str(), str.size());
     if (bytes_written < 0) {
-        //Manejar error
+        return std::error_code(EIO, std::system_category());
     }
     return std::error_code(0, std::system_category());
 }

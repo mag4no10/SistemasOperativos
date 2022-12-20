@@ -1,12 +1,13 @@
 #pragma once
 
-#include <iostream>
+#include <iostream>      //Basic input and output
+#include <vector>        //std::vector
+#include <limits.h>      //LOGIN_NAME_MAX, PATH_MAX
+#include <libgen.h>      //dirname, basename
+#include <unistd.h>      //write, read
 
 
 inline bool preserve_all = false;
-
-void usage(int, char* []);
-void information();
 
 std::string dirname(std::string&);
 std::string basename_(std::string&);

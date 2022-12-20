@@ -6,13 +6,18 @@
     #define OS_Windows 1
 #endif 
 
-#include <iostream>
-#include <vector>
+#include <iostream>      //Basic input and output
+#include <vector>        //std::vector
+#include <limits.h>      //LOGIN_NAME_MAX, PATH_MAX
+#include <unistd.h>      //get_login_r, chdir, close, chown, unlink
+#include <sys/stat.h>    //stat
+#include <utime.h>       //utime
+#include <fcntl.h>       //open
+#include <string>        //std::string
 
 
-int echo_command(const std::vector<std::string>&);
-int cd_command(const std::vector<std::string>&);
-int cp_command(const std::vector<std::string>&);
-int mv_command(const std::vector<std::string>&);
-int clear_command();
-int execute_program(const std::vector<std::string>&, bool);
+std::error_code echo_command(const std::vector<std::string>&);
+std::error_code cd_command(const std::vector<std::string>&);
+std::error_code cp_command(const std::vector<std::string>&);
+std::error_code mv_command(const std::vector<std::string>&);
+std::error_code clear_command();
