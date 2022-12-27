@@ -46,6 +46,7 @@ std::error_code cd_command(const std::vector<std::string>& args) {
 
 std::error_code cp_command(const std::vector<std::string>& args) {
     if (args.size() > 4 || args.size() < 2) {
+        std::cerr << "Invalid number of arguments" << std::endl;
         return std::error_code(EDOM, std::system_category());
     }
     std::string mode(""), src_path = args.at(1), dst_path = args.at(2);

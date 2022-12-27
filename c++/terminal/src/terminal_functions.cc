@@ -125,7 +125,7 @@ std::vector<shell::command> parse_line(const std::string& line) {
 shell::command_result execute_commands(const std::vector<shell::command>& commands) {
     int return_value{0};
     for (std::vector<std::string> i : commands) {
-        if (i.back() == ";" || i.back() == "|" || i.back() == "&" || i.back() == "") {
+        if (i.back() == ";" || i.back() == "|" || i.back() == "") {
             i.pop_back();
         }
         if (i.front() == "echo") {
@@ -168,13 +168,52 @@ shell::command_result execute_commands(const std::vector<shell::command>& comman
             bool has_to_wait = true;
             if (i.back() == "&") {
                 has_to_wait = false;
+                i.pop_back();
             }
-            auto [pid, command_name, output_value] = execute_program(i,has_to_wait);
+            auto [pid,command_name,output_value] = execute_program(i,has_to_wait);
             if (output_value == 1) {
                 return_value = 1;
+                return shell::command_result{return_value, false};
+            }
+            if (has_to_wait == true) {
+                continue;
+            }
+            std::vector<pid_t> pids;
+            std::vector<std::string> command_names;
+            std::vector<int> out_values;
+            pids.push_back(pid);
+            command_names.push_back(command_name);
+            out_values.push_back(output_value);
+            int status{0};
+            for (uint64_t i = 0; i < pids.size(); i++) {
+                pid_t wcpid = waitpid(pids[i], &status, WNOHANG);
+                if (wcpid == -1) { 
+                    perror("waitpid() error");
+                    continue;
+                }
+                else if (wcpid == 0) {
+                    //std::cout << "El proceso hijo " << pids[i]<< " se esta ejecutando" << std::endl;
+                    continue;
+                }
+                if (WIFEXITED(status)) {
+                    std::cout << "[" << pids[i] << "] " << command_names[i] << 
+                    " terminado " << "(" << WEXITSTATUS(status) << ")" << std::endl;
+                }
+                else if (WIFSIGNALED(status)) {
+                    std::cout << "[" << pids[i] << "] " << command_names[i] << 
+                    " muerto por señal: " << "(" << WTERMSIG(status) << ")" << std::endl;
+                }
+                else if (WIFSTOPPED(status)) {
+                    std::cout << "[" << pids[i] << "] " << command_names[i] << 
+                    " parado por señal: " << "(" << WSTOPSIG(status) << ")" << std::endl;
+                }
+                else if (WIFCONTINUED(status)) {
+                    std::cout << "[" << pids[i] << "] " << command_names[i] << 
+                    " continuado " << std::endl;
+                }
             }
         }
-    }
+    }   
     return shell::command_result{return_value, false};
 }
 
@@ -185,36 +224,33 @@ shell::execute_result execute_program(const std::vector<std::string>& args, bool
     }
     argv.push_back(NULL);
     const char* program_name = argv[0];
-    pid_t cpid = fork(); 
-    if (has_wait == true) {
-        if (cpid == 0) {
-            int status_code = execvp(program_name, const_cast<char* const*>(argv.data()));
-            if (status_code < 0) {
-                std::cout << "terminal: unknown command" << std::endl;
-                _exit(1);
-            }
-            _exit(0);
+    pid_t cpid = fork();
+    if (cpid == 0) {
+        int status_code = execvp(program_name, const_cast<char* const*>(argv.data()));
+        if (status_code < 0) {
+            std::cout << "terminal: unknown command" << std::endl;
+            _exit(1);
         }
-        else if (cpid > 0) {
-            int status;
-            if (wait(&status) == -1) {
-                perror("wait() failed");
-                return shell::execute_result{cpid,program_name,1};
-            }
-            else {
-                int child_returned = WEXITSTATUS(status);
-                if (child_returned == 1) {
-                    return shell::execute_result{cpid,program_name,1};
-                }
-                return shell::execute_result{cpid,program_name,0};
-            }
+        _exit(0);
+    }
+    else if (cpid > 0) {
+        if (has_wait == false) {
+            return shell::execute_result{cpid,program_name,0};
+        }
+        int status;
+        if (wait(&status) == -1) {
+            perror("wait() failed");
+            return shell::execute_result{cpid,program_name,1};
         }
         else {
-            return shell::execute_result{cpid,program_name,1};
+            int child_returned = WEXITSTATUS(status);
+            if (child_returned == 1) {
+                return shell::execute_result{cpid,program_name,1};
+            }
         }
     }
     else {
-
+        return shell::execute_result{cpid,program_name,1};
     }
     return shell::execute_result{cpid,program_name,0};
 }
