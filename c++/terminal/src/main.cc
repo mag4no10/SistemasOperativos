@@ -16,7 +16,7 @@ int main(int argc, char* argv[]) {
         }
         std::error_code error1 = read_line(STDIN_FILENO,linea);
         if (error1) {
-            return 1;
+            break;
         }
         if (linea.empty()) {
             continue;

@@ -32,8 +32,8 @@ std::error_code print(const std::string& str) {
 
 std::error_code read(int fd, std::vector<uint8_t>& buffer) {
     uint32_t bytes_read = read(fd, buffer.data(), buffer.size());
-    if (bytes_read < 0) {
-        return std::error_code(EIO, std::system_category());
+    if (bytes_read <= 0) {
+        return std::error_code(EOF, std::system_category());
     }
     buffer.resize(bytes_read);
     return std::error_code(0, std::system_category());
