@@ -1,13 +1,6 @@
 #include "in_out_functions.h"
 #include "terminal_functions.h"
 
-/*TODO 
-*   OUTPUT: COLORS
-*   EOF
-*   PROGRAMS BACKGROUND
-*   INNER PROGRAMS BACKGROUND
-**/
-
 int main(int argc, char* argv[]) {
     while (true) {
         std::error_code error = print_prompt(last_command_status);
@@ -16,7 +9,7 @@ int main(int argc, char* argv[]) {
         }
         std::error_code error1 = read_line(STDIN_FILENO,linea);
         if (error1) {
-            break;
+            continue;
         }
         if (linea.empty()) {
             continue;
@@ -25,6 +18,7 @@ int main(int argc, char* argv[]) {
         if (list_of_commands.empty()) {
             continue;
         }
+
         auto [return_value, is_quit_requested] = execute_commands(list_of_commands);
         last_command_status = return_value;
         if (is_quit_requested) {

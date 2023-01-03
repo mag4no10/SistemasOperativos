@@ -51,8 +51,8 @@ std::error_code read_line(int fd, std::string& line) {
         line += '\n';
         return std::error_code(0, std::system_category());
     }
-    int counter{1};
     while(true) {
+        int counter{1};
         for (const uint8_t i: pending_input) {
             if (i == '\n') {
                 line.assign(pending_input.begin(), pending_input.begin()+counter);
@@ -78,7 +78,7 @@ std::error_code read_line(int fd, std::string& line) {
             pending_input.insert(pending_input.end(), buffer.begin(), buffer.end());
         }
         if (pending_input.empty()) {
-            linea.clear();
+            line.clear();
         }
     }
     return std::error_code(0, std::system_category());

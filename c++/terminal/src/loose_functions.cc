@@ -2,7 +2,7 @@
 #include <vector>        //std::vector
 #include <limits.h>      //LOGIN_NAME_MAX, PATH_MAX
 #include <libgen.h>      //dirname, basename
-#include <unistd.h>      //write, read, 
+#include <unistd.h>      //write, read
 
 #include "loose_functions.h"
 
