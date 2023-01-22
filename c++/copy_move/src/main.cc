@@ -6,9 +6,7 @@
 
 int main(int argc, char* argv[]) {
     usage(argc, argv);
-
-    std::string mode     (argv[1]);
-
+    std::string mode(argv[1]);º
     if (mode == "-m") {
         std::string src_path (argv[2]);
         std::string dst_path (argv[3]);
